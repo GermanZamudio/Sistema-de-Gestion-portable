@@ -1,0 +1,66 @@
+{
+  "name": "gestion-app-electron",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "dev": "concurrently \"npm run start\" \"npm run dev --prefix renderer\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.10.0",
+    "better-sqlite3": "^11.10.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "multer": "^2.0.1",
+    "react-hook-form": "^7.60.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.6.2",
+    "sharp": "^0.34.2",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.gestion.app",
+    "productName": "GestionApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "/*",
+      "!dist",
+      "!node_modules/.cache",
+      "!/.md"
+    ],
+    "extraResources": [
+      {
+        "from": "db/",
+        "to": "db",
+        "filter": [
+          "**/.db"
+        ]
+      },
+      {
+        "from": "assets/",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "portable"
+    }
+  }
+}

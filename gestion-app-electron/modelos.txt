@@ -1,0 +1,108 @@
+Datos de recepcion
+
+Orden de servicio: POST
+{
+    Entrega esperada
+    {
+    "orden_servicio": {
+        "nombre": "TEXT",
+        "descripcion": "TEXT",
+        "fecha": "TEXT (YYYY-MM-DD)",
+        "tipo": "ENTREGA | RETIRO",
+        "departamento_id": INT
+    },
+    "articulos_asignados": [
+        {
+        "nombre": "TEXT",
+        "cantidad_asignada": INT,
+        "cantidad_entregada": INT,
+        "articulo_id": INT
+        }
+    ],
+    "identificado_asignado": [
+        {
+        "articulo_identificado_id": INT
+        }
+    ]
+    }
+    Respuesta esperada
+    {
+    "message": "Orden y artículos guardados correctamente",
+    "orden_id": {
+        "id": 42,
+        "nombre": "Entrega marzo",
+        ...
+    }
+    }
+}
+
+Orden Compra:
+{
+    Entrega esperada
+    {
+        "orden_compra": {"fecha": "2024-06-15", "proveedor": "X", "total": 10000},
+        "articulos_comprados": [
+            {"nombre": "Cable", "cantidad_pedida": 50, "cantidad_recibida": 0, "articulo_id": 1}
+        ]
+    }
+}
+
+Parcial_pendiente_compra:
+{
+    Entrega esperada
+    {
+        "entrega_parcial": {"id_articulo": 3, "entregado": 5}
+    }
+}
+
+Boton_pendiente_compra:
+{
+    Entrega esperada
+    {
+        "entrega": {"id_articulo_orden": 2}
+    }
+}
+
+
+Métodos HTTP y endpoints esperados (para referencia):
+{
+    Orden de servicio:
+
+    POST /orden_servicio/
+
+    GET /orden_servicio/ (listar)
+
+    GET /orden_servicio/{id}/ (detalle)
+
+    DELETE /orden_servicio/{id}/
+
+    Orden de compra:
+
+    POST /orden_compra/
+
+    GET /orden_compra/
+
+    GET /orden_compra/{id}/
+
+    DELETE /orden_compra/{id}/
+
+    Parcial pendiente compra:
+
+    POST /parcial_pendiente_compra/
+
+    GET /parcial_pendiente_compra/
+
+    GET /parcial_pendiente_compra/{id}/
+
+    DELETE /parcial_pendiente_compra/{id}/
+
+    Boton pendiente compra:
+
+    POST /boton_pendiente_compra/
+
+    GET /boton_pendiente_compra/
+
+    GET /boton_pendiente_compra/{id}/
+
+    DELETE /boton_pendiente_compra/{id}/
+}
