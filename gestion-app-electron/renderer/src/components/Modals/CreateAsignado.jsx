@@ -5,22 +5,38 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
   const [articulosDisponibles, setArticulosDisponibles] = useState([]);
   const [formValues, setFormValues] = useState({
     articulo_id: '',
-    cantidad_asignada: '',    
-    cantidad_entregada: ''    
+    cantidad_asignada: '',
+    cantidad_entregada: ''
   });
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
-
   useEffect(() => {
     async function fetchDatos() {
-      const response = await window.api.get(`/api/form/agregar_items/`);
+      // Mapeo tipo para enviar tipo_bien al backend
+      let tipo_bien_query = "";
+      if (tipo === "uso") tipo_bien_query = "uso";
+      else if (tipo === "consumo") tipo_bien_query = "consumo";
+      else if (tipo === "stock" || tipo === "articulo") tipo_bien_query = "stock";
+
+      // Construyo URL con query
+      const url = tipo_bien_query
+        ? `/api/form/agregar_items/?tipo_bien=${tipo_bien_query}`
+        : `/api/form/agregar_items/`;
+
+      const response = await window.api.get(url);
+
       if (response.error) {
         setError(response.error);
       } else {
-        if (tipo === "articulo") setArticulosDisponibles(response.articulos || []);
-        else if (tipo === "asignar_sobrante") setArticulosDisponibles(response.sobrantes || []);
-        else if (tipo === "identificado") setArticulosDisponibles(response.identificados || []);
-        else setArticulosDisponibles([]);
+        if (["uso", "consumo", "stock", "articulo"].includes(tipo)) {
+          setArticulosDisponibles(response.articulos || []);
+        } else if (tipo === "asignar_sobrante") {
+          setArticulosDisponibles(response.sobrantes || []);
+        } else if (tipo === "identificado") {
+          setArticulosDisponibles(response.identificados || []);
+        } else {
+          setArticulosDisponibles([]);
+        }
       }
     }
     if (isOpen) fetchDatos();
@@ -61,36 +77,36 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
       return;
     }
 
-    if (tipo === "articulo") {
-      const disponible = parseInt(art.cantidad || 0);
-      const asignada = parseInt(formValues.cantidad_asignada);
-      const entregada = parseInt(formValues.cantidad_entregada);
+  if (["articulo", "uso", "consumo", "stock"].includes(tipo)) {
+    const disponible = parseInt(art.cantidad || 0);
+    const asignada = parseInt(formValues.cantidad_asignada);
+    const entregada = parseInt(formValues.cantidad_entregada);
 
-      if (isNaN(asignada) || isNaN(entregada)) {
-        setError("Las cantidades asignada y entregada deben ser números.");
-        return;
-      }
-      if (asignada > disponible) {
-        setError('No puede asignar más de lo disponible.');
-        return;
-      }
-      if (entregada > asignada) {
-        setError('La cantidad entregada no puede superar la asignada.');
-        return;
-      }
+    if (isNaN(asignada) || isNaN(entregada)) {
+      setError("Las cantidades asignada y entregada deben ser números.");
+      return;
+    }
+    if (asignada > disponible) {
+      setError('No puede asignar más de lo disponible.');
+      return;
+    }
+    if (entregada > asignada) {
+      setError('La cantidad entregada no puede superar la asignada.');
+      return;
+    }
 
-      const response = await window.api.post(`/api/form/agregar_items/articulo/${id}`, {
-        articulo_id: parseInt(articulo_id),
-        cantidad_asignada: asignada,
-        cantidad_entregada: entregada,
-      });
+    const response = await window.api.post(`/api/form/agregar_items/articulo/${id}`, {
+      articulo_id: parseInt(articulo_id),
+      cantidad_asignada: asignada,
+      cantidad_entregada: entregada,
+    });
 
-      if (response.error) {
-        setError('Error: ' + response.error);
-      } else {
-        setMensaje('Artículo asignado correctamente');
-        actualizarLista();
-      }
+    if (response.error) {
+      setError('Error: ' + response.error);
+    } else {
+      setMensaje('Artículo asignado correctamente');
+      actualizarLista();
+    }
 
     } else if (tipo === "asignar_sobrante") {
       const cantidad = parseInt(formValues.cantidad_asignada);
@@ -135,9 +151,10 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
     const nuevaLista = await window.api.get(`/api/orden_servicio/${id}`);
     if (nuevaLista) {
       
-      if (tipo === "articulo" && Array.isArray(nuevaLista.articulos_asignados)) {
-        setState(nuevaLista.articulos_asignados);
+    if (["articulo", "uso", "consumo", "stock"].includes(tipo) && Array.isArray(nuevaLista.articulos_asignados)) {
+      setState(nuevaLista.articulos_asignados);
       } else if (tipo === "asignar_sobrante" && Array.isArray(nuevaLista.sobrantes_de_obra)) {
+        setState(nuevaLista.sobrantes_de_obra);
       } else if (tipo === "identificado" && Array.isArray(nuevaLista.articulos_asignados_identificados)) {
         console.log("ingrese a identificado")
         setState(nuevaLista);
@@ -151,7 +168,6 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
     });
     setTimeout(() => onClose(), 600);
   }
-
   if (!isOpen) return null;
 
   return (
@@ -172,7 +188,8 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
               <option value="">Seleccione un artículo</option>
               {articulosDisponibles.map((art, idx) => (
                 <option key={idx} value={art.id}>
-                  {tipo === "articulo" && `${art.nombre} - Cantidad disponible: ${art.cantidad}`}
+                  {(tipo === "articulo" || tipo === "stock" || tipo === "uso" || tipo === "consumo") &&
+                    `${art.nombre} - Cantidad disponible: ${art.cantidad}`}
                   {tipo === "asignar_sobrante" && `${art.nombre_articulo} - Cantidad sobrante: ${art.cantidad}`}
                   {tipo === "identificado" && `${art.nombre_articulo} - Código: ${art.codigo}`}
                 </option>
@@ -180,7 +197,7 @@ export default function ModalArtAsignado({ isOpen, title, onClose, setState, id,
             </select>
           </FormGroup>
 
-          {tipo === "articulo" && (
+          {(tipo === "articulo" || tipo === "stock" || tipo === "uso" || tipo === "consumo") && (
             <>
               <FormGroup>
                 <label>Cantidad Asignada</label>

@@ -14,6 +14,7 @@ export default function OrdenServicio() {
   const [modalArtOpen, setModalArtOpen] = useState(false);
   const [modalIdentOpen, setModalIdentOpen] = useState(false);
   const [modalSobranteOpen, setModalSobranteOpen] = useState(false);
+  const [modalTipoAsignar, setModalTipoAsignar] = useState(""); // Nuevo estado para tipo
 
   const [ordenServicio, setOrdenServicio] = useState({});
   const [edificio, setEdificio] = useState({});
@@ -96,6 +97,12 @@ export default function OrdenServicio() {
 
   const hayIdentificadosCulminados = identificados.some(item => item.estado === "CULMINADO");
 
+  // Función para abrir modal con tipo
+  const abrirModalAsignar = (tipo) => {
+    setModalTipoAsignar(tipo);
+    setModalArtOpen(true);
+  };
+
   return (
     <Container>
       {modalOpen && ordenServicio.id && (
@@ -109,11 +116,11 @@ export default function OrdenServicio() {
 
       <ModalAsigando
         isOpen={modalArtOpen}
-        title="Asignar artículo"
+        title={`Asignar nuevo ${modalTipoAsignar === "stock" ? "artículo" : modalTipoAsignar === "uso" ? "bien de uso" : modalTipoAsignar === "consumo" ? "bien de consumo" : ""}`}
         onClose={() => setModalArtOpen(false)}
         setState={setArticulos}
         id={ordenServicio?.id}
-        tipo='articulo'
+        tipo={modalTipoAsignar}
       />
 
       <ModalAsigando
@@ -122,7 +129,7 @@ export default function OrdenServicio() {
         onClose={() => setModalIdentOpen(false)}
         setState={setIdentificados}
         id={ordenServicio?.id}
-        tipo='identificado'
+        tipo="identificado"
       />
 
       <ModalAsigando
@@ -131,7 +138,7 @@ export default function OrdenServicio() {
         onClose={() => setModalSobranteOpen(false)}
         setState={setSobrantes}
         id={ordenServicio?.id}
-        tipo='sobrante'
+        tipo="asignar_sobrante"
       />
 
       {mensaje && <MensajeExito>{mensaje}</MensajeExito>}
@@ -147,12 +154,12 @@ export default function OrdenServicio() {
       <Subtitulo>Estado de la orden</Subtitulo>
       <Select
         options={[
-          { value: 'ACTIVO', label: 'Activa' },
-          { value: 'CULMINADO', label: 'Culminada' }
+          { value: "ACTIVO", label: "Activa" },
+          { value: "CULMINADO", label: "Culminada" },
         ]}
         value={{
           value: ordenServicio.estado,
-          label: ordenServicio.estado === 'ACTIVO' ? 'Activa' : 'Culminada'
+          label: ordenServicio.estado === "ACTIVO" ? "Activa" : "Culminada",
         }}
         isDisabled
         styles={customSelectStyles}
@@ -163,12 +170,12 @@ export default function OrdenServicio() {
       <Parrafo><strong>Número:</strong> {edificio?.numero ?? "-"}</Parrafo>
       <Parrafo><strong>Piso:</strong> {edificio?.piso ?? "-"}</Parrafo>
 
-      <Subtitulo>Artículos Asignados</Subtitulo>
+      {/* Artículos de Stock */}
+      <Subtitulo>Artículos de Stock</Subtitulo>
       {ordenServicio.estado !== "CULMINADO" && (
-        <ButtonNew onClick={() => setModalArtOpen(true)}>Asignar nuevo artículo</ButtonNew>
+        <ButtonNew onClick={() => abrirModalAsignar("stock")}>Asignar nuevo artículo</ButtonNew>
       )}
-
-      {articulos.length > 0 ? (
+      {articulos.filter(item => item.tipo_bien === "STOCK").length > 0 ? (
         <Tabla>
           <thead>
             <tr>
@@ -179,36 +186,125 @@ export default function OrdenServicio() {
             </tr>
           </thead>
           <tbody>
-            {articulos.map((item, index) => {
-              const maxReached = item.cantidad_entregada >= item.cantidad_asignada;
-              const minReached = item.cantidad_entregada <= 0;
+            {articulos
+              .filter(item => item.tipo_bien === "STOCK")
+              .map((item, index) => {
+                const maxReached = item.cantidad_entregada >= item.cantidad_asignada;
+                const minReached = item.cantidad_entregada <= 0;
 
-              return (
-                <tr key={item.id ?? index}>
-                  <td>{item.nombre}</td>
-                  <td>{item.cantidad_asignada}</td>
-                  <td>{item.cantidad_entregada}</td>
-                  <td>
-                    {ordenServicio.estado !== "CULMINADO" && item.estado !== "CULMINADO" && (
-                      <>
-                        <Button small onClick={() => addEntrega(item.id)} disabled={maxReached}>+</Button>
-                        <Button small onClick={() => removeEntrega(item.id)} disabled={minReached}>−</Button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                return (
+                  <tr key={item.id ?? index}>
+                    <td>{item.nombre}</td>
+                    <td>{item.cantidad_asignada}</td>
+                    <td>{item.cantidad_entregada}</td>
+                    <td>
+                      {ordenServicio.estado !== "CULMINADO" && item.estado !== "CULMINADO" && (
+                        <>
+                          <Button small onClick={() => addEntrega(item.id)} disabled={maxReached}>+</Button>
+                          <Button small onClick={() => removeEntrega(item.id)} disabled={minReached}>−</Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </Tabla>
       ) : (
         <Parrafo>No hay artículos asignados.</Parrafo>
       )}
+      {/* Bienes de Uso */}
+      <Subtitulo>Bienes de Uso</Subtitulo>
+      {ordenServicio.estado !== "CULMINADO" && (
+        <ButtonNew onClick={() => abrirModalAsignar("uso")}>Asignar nuevo bien de uso</ButtonNew>
+      )}
+      {articulos.filter(item => item.tipo_bien === "USO").length > 0 ? (
+        <Tabla>
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Asignado</th>
+              <th>Entregado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {articulos
+              .filter(item => item.tipo_bien === "USO")
+              .map((item, index) => {
+                const maxReached = item.cantidad_entregada >= item.cantidad_asignada;
+                const minReached = item.cantidad_entregada <= 0;
+
+                return (
+                  <tr key={item.id ?? index}>
+                    <td>{item.nombre}</td>
+                    <td>{item.cantidad_asignada}</td>
+                    <td>{item.cantidad_entregada}</td>
+                    <td>
+                      {ordenServicio.estado !== "CULMINADO" && item.estado !== "CULMINADO" && (
+                        <>
+                          <Button small onClick={() => addEntrega(item.id)} disabled={maxReached}>+</Button>
+                          <Button small onClick={() => removeEntrega(item.id)} disabled={minReached}>−</Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </Tabla>
+      ) : (
+        <Parrafo>No hay bienes de uso asignados.</Parrafo>
+      )}
+
+      {/* Bienes de Consumo */}
+      <Subtitulo>Bienes de Consumo</Subtitulo>
+      {ordenServicio.estado !== "CULMINADO" && (
+        <ButtonNew onClick={() => abrirModalAsignar("consumo")}>Asignar nuevo bien de consumo</ButtonNew>
+      )}
+      {articulos.filter(item => item.tipo_bien === "CONSUMO").length > 0 ? (
+        <Tabla>
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Asignado</th>
+              <th>Entregado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {articulos
+              .filter(item => item.tipo_bien === "CONSUMO")
+              .map((item, index) => {
+                const maxReached = item.cantidad_entregada >= item.cantidad_asignada;
+                const minReached = item.cantidad_entregada <= 0;
+
+                return (
+                  <tr key={item.id ?? index}>
+                    <td>{item.nombre}</td>
+                    <td>{item.cantidad_asignada}</td>
+                    <td>{item.cantidad_entregada}</td>
+                    <td>
+                      {ordenServicio.estado !== "CULMINADO" && item.estado !== "CULMINADO" && (
+                        <>
+                          <Button small onClick={() => addEntrega(item.id)} disabled={maxReached}>+</Button>
+                          <Button small onClick={() => removeEntrega(item.id)} disabled={minReached}>−</Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </Tabla>
+      ) : (
+        <Parrafo>No hay bienes de consumo asignados.</Parrafo>
+      )}
+
 
       <Subtitulo>Artículos Identificados Asignados</Subtitulo>
-      
       {ordenServicio.estado !== "CULMINADO" && (
-      <ButtonNew onClick={() => setModalIdentOpen(true)}>Asignar nuevo artículo identificado</ButtonNew>
+        <ButtonNew onClick={() => setModalIdentOpen(true)}>Asignar nuevo artículo identificado</ButtonNew>
       )}
       {identificados.length > 0 ? (
         <Lista>
@@ -223,9 +319,8 @@ export default function OrdenServicio() {
       )}
 
       <Subtitulo>Sobrantes Utilizados</Subtitulo>
-      
       {ordenServicio.estado !== "CULMINADO" && (
-      <ButtonNew onClick={() => setModalSobranteOpen(true)}>Asignar nuevo sobrante</ButtonNew>
+        <ButtonNew onClick={() => setModalSobranteOpen(true)}>Asignar nuevo sobrante</ButtonNew>
       )}
       {sobrantes.length > 0 ? (
         <Lista>
@@ -255,13 +350,12 @@ export default function OrdenServicio() {
 }
 
 // ==== Styled Components ====
-
-// ==== Styled Components Comprimidos ====
+// (Igual que tu código anterior...)
 
 const Container = styled.div`
-  max-width: 700px;              // antes: 900px
-  margin: 20px auto;             // antes: 30px
-  padding: 0 10px;               // antes: 20px
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 0 10px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
@@ -269,7 +363,7 @@ const MensajeExito = styled.p`
   color: green;
   font-weight: 600;
   text-align: center;
-  margin-bottom: 10px;          // antes: 15px
+  margin-bottom: 10px;
   font-size: 14px;
 `;
 
@@ -277,37 +371,37 @@ const MensajeError = styled.p`
   color: red;
   font-weight: 600;
   text-align: center;
-  margin-bottom: 10px;          // antes: 15px
+  margin-bottom: 10px;
   font-size: 14px;
 `;
 
 const ImagenOrden = styled.img`
   display: block;
-  max-width: 220px;             // antes: 300px
-  max-height: 180px;            // antes: 250px
-  margin: 0 auto 15px auto;     // antes: 20px
+  max-width: 220px;
+  max-height: 180px;
+  margin: 0 auto 15px auto;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.15);
   object-fit: contain;
 `;
 
 const Titulo = styled.h1`
-  font-size: 20px;              // más chico
+  font-size: 20px;
   text-align: center;
-  margin-bottom: 10px;          // antes: 15px
+  margin-bottom: 10px;
 `;
 
 const Subtitulo = styled.h2`
-  font-size: 16px;              // antes: más grande
-  margin-top: 20px;             // antes: 30px
-  margin-bottom: 8px;           // antes: 12px
+  font-size: 16px;
+  margin-top: 20px;
+  margin-bottom: 8px;
   border-bottom: 1px solid #357edd;
   padding-bottom: 2px;
 `;
 
 const Parrafo = styled.p`
-  font-size: 14px;              // antes: 16px
-  margin: 4px 0;                // antes: 6px
+  font-size: 14px;
+  margin: 4px 0;
 `;
 
 const Tabla = styled.table`
@@ -332,7 +426,6 @@ const Tabla = styled.table`
   }
 `;
 
-
 const Button = styled.button`
   background-color: #357edd;
   color: white;
@@ -355,8 +448,8 @@ const Button = styled.button`
 `;
 
 const ButtonNew = styled.button`
-  margin-bottom: 15px;          // antes: 20px
-  padding: 6px 10px;            // antes: 10px 15px
+  margin-bottom: 15px;
+  padding: 6px 10px;
   background-color: #e67e22;
   color: white;
   border: none;
@@ -371,19 +464,18 @@ const ButtonNew = styled.button`
   }
 `;
 
-
 const Lista = styled.ul`
-  padding-left: 15px;           // antes: 20px
-  font-size: 14px;              // antes: 16px
-  margin-bottom: 15px;          // antes: 20px
+  padding-left: 15px;
+  font-size: 14px;
+  margin-bottom: 15px;
 
   li {
-    margin-bottom: 4px;         // antes: 6px
+    margin-bottom: 4px;
   }
 `;
 
 const LinksWrapper = styled.div`
-  margin-top: 20px;             // antes: 30px
+  margin-top: 20px;
   text-align: center;
 `;
 
@@ -391,7 +483,7 @@ const StyledLink = styled(Link)`
   color: #357edd;
   text-decoration: none;
   font-weight: 600;
-  font-size: 14px;              // antes: 18px
+  font-size: 14px;
 
   &:hover {
     text-decoration: underline;
@@ -402,28 +494,28 @@ const StyledLink = styled(Link)`
 const customSelectStyles = {
   control: (provided) => ({
     ...provided,
-    borderColor: '#ccc',
-    boxShadow: 'none',
-    '&:hover': {
-      borderColor: '#357edd',
+    borderColor: "#ccc",
+    boxShadow: "none",
+    "&:hover": {
+      borderColor: "#357edd",
     },
-    fontSize: '14px',           // antes: 16px
-    minHeight: '30px',
+    fontSize: "14px",
+    minHeight: "30px",
   }),
   option: (provided, state) => ({
     ...provided,
-    fontSize: '14px',
+    fontSize: "14px",
     backgroundColor: state.isSelected
-      ? '#357edd'
+      ? "#357edd"
       : state.isFocused
-      ? '#f0f8ff'
-      : '#fff',
-    color: state.isSelected ? 'white' : 'black',
+      ? "#f0f8ff"
+      : "#fff",
+    color: state.isSelected ? "white" : "black",
     padding: 6,
   }),
   singleValue: (provided) => ({
     ...provided,
     fontWeight: 500,
-    fontSize: '14px',
+    fontSize: "14px",
   }),
 };

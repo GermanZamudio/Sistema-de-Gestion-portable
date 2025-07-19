@@ -36,11 +36,12 @@ router.get('/orden_servicio/:id', (req, res) => {
     `).get(orden.departamento_id);
 
     const articulos_asignados = db.prepare(`
-      SELECT a.nombre, asi.*
+      SELECT a.nombre, a.tipo_bien, asi.*
       FROM articulos_asignados asi
       JOIN articulo a ON a.id = asi.articulo_id
-      WHERE asi.orden_servicio_id = ?
+      WHERE asi.orden_servicio_id = ? 
     `).all(id);
+
 
     const articulos_asignados_identificados = db.prepare(`
       SELECT asi.estado,
@@ -162,14 +163,20 @@ router.post('/form_orden_servicio',async (req,res)=>{
 //GET
 router.get('/form_orden_servicio', (req,res) => {
   try {
-    const departamentos = db.prepare(`SELECT id, numero, piso FROM departamento WHERE estado != 'REPARANDO'`).all();
+  const departamentos = db.prepare(`
+    SELECT d.id, d.numero, d.piso, e.nombre AS edificio
+    FROM departamento d
+    JOIN edificio e ON e.id = d.edificio_id
+    ORDER BY e.nombre, d.piso, d.numero
+  `).all();
+
     const ubicacion = db.prepare(`SELECT id, nombre FROM ubicacion`).all();
     const articulos = db.prepare(`
-      SELECT a.id, a.nombre, e.cantidad
+      SELECT a.id, a.tipo_bien, a.nombre, e.cantidad
        FROM articulo a 
        LEFT JOIN articulo_identificado ai ON a.id = ai.id_articulo
        LEFT JOIN existencia e ON a.id=e.articulo_asociado_id
-       WHERE ai.id IS NULL AND e.cantidad>0  
+       WHERE ai.id IS NULL AND e.cantidad>0 
        `).all();
 
     const identificados = db.prepare(`
@@ -205,7 +212,6 @@ router.get('/form_orden_servicio', (req,res) => {
   }
 });
 
-
 /*********** Stock ****************/
 router.get('/inventario_stock',(req,res)=>{
   try{
@@ -222,17 +228,28 @@ router.get('/inventario_stock',(req,res)=>{
   }
 });
 
-
 // GET - Obtener artículos disponibles para asignar
 router.get('/form/agregar_items/', (req, res) => {
   try {
-    const articulos = db.prepare(`
-      SELECT a.id, a.nombre, e.cantidad
+    const tipoBien = req.query.tipo_bien?.toUpperCase(); // 🔧 <-- acá
+
+    let articulosQuery = `
+      SELECT a.id, a.nombre, a.tipo_bien, e.cantidad
       FROM articulo a 
       LEFT JOIN articulo_identificado ai ON a.id = ai.id_articulo
       LEFT JOIN existencia e ON a.id = e.articulo_asociado_id
       WHERE ai.id IS NULL AND e.cantidad > 0
-    `).all();
+    `;
+    console.log("El tipo de bien que pide es: ", tipoBien)
+    const params = [];
+
+    if (tipoBien) {
+      articulosQuery += " AND a.tipo_bien = ?";
+      params.push(tipoBien);
+    }
+
+    const articulos = db.prepare(articulosQuery).all(...params);
+    console.log("Articulos",articulos)
 
     const identificados = db.prepare(`
       SELECT ai.id, ai.codigo, a.nombre AS nombre_articulo
@@ -243,6 +260,7 @@ router.get('/form/agregar_items/', (req, res) => {
         ON ai.id_articulo = a.id 
       WHERE aias.id IS NULL AND ai.estado = 'ALTA'
     `).all();
+    console.log("Identificados",identificados)
 
     const sobrantes = db.prepare(`
       SELECT s.id, s.cantidad, a.nombre AS nombre_articulo 
@@ -250,6 +268,7 @@ router.get('/form/agregar_items/', (req, res) => {
       JOIN articulo a ON a.id = s.articulo_id
       WHERE s.cantidad > 0
     `).all();
+    console.log("Sobrantes",sobrantes)
 
     res.status(200).json({
       articulos,
@@ -258,11 +277,10 @@ router.get('/form/agregar_items/', (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error en /form/formulario_articulos:", err.message);
+    console.error("Error en /form/agregar_items:", err.message);
     res.status(500).json({ error: "Error al procesar artículos" });
   }
 });
-
 
 // POST - Insertar artículo/sobrante/identificado asignado, validar y actualizar stock
 router.post('/form/agregar_items/:tipo/:id', (req, res) => {
@@ -314,6 +332,7 @@ router.post('/form/agregar_items/:tipo/:id', (req, res) => {
       return res.status(200).json({ mensaje: "Artículo asignado correctamente." });
 
     } else if (tipo === 'asignar_sobrante') {
+      console.log("Ingrese")
       const { articulo_id, cantidad } = data;
 
       if (!articulo_id || cantidad == null || isNaN(cantidad) || cantidad <= 0) {
@@ -344,10 +363,11 @@ router.post('/form/agregar_items/:tipo/:id', (req, res) => {
       `).run(cantidad, id, id_sobrantes);
 
       // Actualizar sobrantes restando cantidad asignada
+      console.log("La cantidad es: ", cantidad);
       db.prepare(`
         UPDATE sobrantes SET cantidad = cantidad - ?
-        WHERE articulo_id = ? AND orden_id IS NULL
-      `).run(cantidad, articulo_id);
+        WHERE id = ?
+      `).run(cantidad, id_sobrantes);
 
       return res.status(200).json({ mensaje: "Sobrante asignado correctamente." });
 
@@ -385,7 +405,6 @@ router.post('/form/agregar_items/:tipo/:id', (req, res) => {
   }
 });
 
-
 //Botones
 
 router.post('/modificar_articulos_asignados/:id', (req, res) => {
@@ -418,7 +437,6 @@ router.post('/modificar_articulos_asignados/:id', (req, res) => {
     res.status(500).json({ error: "Error al procesar articulos entregados" });
   }
 });
-
 
 router.delete('/delete_articulo_asignado/:id',(req,res)=>{
   try{
@@ -484,6 +502,7 @@ router.get('/modal_cerrar_orden_servicio/:id',(req,res)=>{
     res.status(500).json({error:"Error al abrir el modal", details: err.message})
   }
 })
+
 router.post('/cerrar_orden_servicio/:id',(req,res)=>{  
   try {
     const { id } = req.params;
@@ -529,7 +548,6 @@ router.post('/cerrar_orden_servicio/:id',(req,res)=>{
     res.status(500).json({ error: "Error al actualizar la orden", details: err.message });
   }
 });
-
 
 router.post('/reabrir_orden_servicio/:id',(req,res)=>{  
   try{

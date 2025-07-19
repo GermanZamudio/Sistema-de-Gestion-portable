@@ -133,7 +133,29 @@ orden_servicio: {
       { "tabla": "ordenes_compra", "label": "fecha" },
       { "tabla": "articulo", "label": "nombre" }
     ]
-  }
+  },
+
+  /***********************Prestamo********************/
+
+prestamo: {
+  campos: [
+    "id",
+    "nombre",
+    "fecha",
+    "autorizado",
+    "estado",
+    "locacion"
+  ],
+  obligatorios: ["nombre"],
+},
+  "articulos_prestados": {
+    "campos": ["estado","cantidad", "prestamo_id", "articulo_id"],
+    "tablas": [
+      { "tabla": "prestamo_id", "label": "nombre" },
+      { "tabla": "articulo", "label": "nombre" }
+    ]
+  },
 }
+
 
 module.exports = formato_tablas;

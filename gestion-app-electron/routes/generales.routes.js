@@ -22,7 +22,8 @@ const tablasPermitidas = [
   'proveedor', 'unidad_medida',
   'edificio', 'departamento', 'articulos_orden_compra',
   'articulo', 'vehiculos', 'atributos_vehiculos',
-  'orden_compra','orden_servicio'
+  'orden_compra','orden_servicio',
+  'prestamo','articulos_prestados'
 ];
 
 /********** CONSULTAS GENERALES ***********/

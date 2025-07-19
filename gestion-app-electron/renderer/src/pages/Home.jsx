@@ -1,114 +1,302 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { FaBoxOpen, FaClipboardList, FaFileAlt, FaPlusCircle, FaWarehouse, FaBuilding, FaTable } from "react-icons/fa";
+import {
+  FaBoxOpen
+} from "react-icons/fa";
 
 const Home = () => {
-  console.log("Home rendered");
+  const [error, setError] = useState("");
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await window.api.get("/api/generico/prestamo");
+        if (response.error) {
+          setError(response.error);
+        } else {
+          setData(response.data);
+        }
+      } catch (err) {
+        setError("Error al cargar las órdenes de servicio");
+      }
+    }
+    fetchData();
+  }, []);
+
+  const PrestamosActivas = data.filter((orden) => orden.estado === "ACTIVO");
+ const [ordenes, setOrdenes] = useState([]);
+
+  useEffect(() => {
+    async function fetchOrdenesCompra() {
+      try {
+        const response = await window.api.get("/api/listar_orden_compra");
+        if (response.error) {
+          setError(response.error);
+        } else {
+          setOrdenes(response.data);
+        }
+      } catch (err) {
+        setError("Error al cargar las órdenes de compra");
+      }
+    }
+    fetchOrdenesCompra();
+  }, []);
+
+  const tienePendientes = (orden) => {
+    return orden.articulos.some(
+      (a) => a.cantidad_recibida < a.cantidad_pedida
+    );
+  };
+
+  const pendientes = ordenes.filter(tienePendientes);
+
   return (
     <Container>
       <Title>Panel de Gestión</Title>
       <Subtitle>Secciones del Sistema</Subtitle>
-      <Grid>
-        <GridItem to="/stock">
-          <FaBoxOpen size={40} />
-          <Label>Stock</Label>
-        </GridItem>
 
-        <GridItem to="/crear-compra">
-          <FaPlusCircle size={40} />
-          <Label>Crear Orden de Compra</Label>
-        </GridItem>
+      <TileGrid>
+        <Tile to="/herramientas"><FaBoxOpen /><Label>Herramientas</Label></Tile>
+        <Tile to="/bienes-uso"><FaBoxOpen /><Label>Bienes de Uso</Label></Tile>
+        <Tile to="/bienes-consumo"><FaBoxOpen /><Label>Bienes de Consumo</Label></Tile>
+        <Tile to="/stock"><FaBoxOpen /><Label>Stock</Label></Tile>
+      </TileGrid>
 
-        <GridItem to="/lista-orden-compra">
-          <FaPlusCircle size={40} />
-          <Label>Ordenes de Compra</Label>
-        </GridItem>
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {!error && data.length === 0 && (
+        <LoadingMessage>Cargando préstamos o no hay registros.</LoadingMessage>
+      )}
 
-        <GridItem to="/lista-ordenes-servicio">
-          <FaClipboardList size={40} />
-          <Label>Órdenes de Servicio</Label>
-        </GridItem>
+      {!error && data.length > 0 && (
+        <>
+          <SubTitle>Préstamos Activos</SubTitle>
+          {PrestamosActivas.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <Cell>Nombre</Cell>
+                <Cell>Estado</Cell>
+                <Cell>Fecha</Cell>
+                <Cell>Locación</Cell>
+              </TableHeader>
+              <ScrollableTableBody>
+                {PrestamosActivas.map((orden) => (
+                  <LinkStyled to={`/detalle-prestamo/${orden.id}`}>
+                  <TableRow key={orden.id ?? orden.nombre}>
+                    <Cell>
+                        {orden.nombre}
+                    </Cell>
+                    <Cell>{orden.estado}</Cell>
+                    <Cell>{orden.fecha}</Cell>
+                    <Cell>{orden.locacion}</Cell>
+                  </TableRow>
+                  </LinkStyled>
+                ))}
+              </ScrollableTableBody>
+            </Table>
+          ) : (
+            <LoadingMessage>No hay órdenes activas.</LoadingMessage>
+          )}
+        </>
+      )}
 
-        <GridItem to="/crear-orden-servicio">
-          <FaFileAlt size={40} />
-          <Label>Crear Orden de Servicio</Label>
-        </GridItem>
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {!error && data.length === 0 && (
+        <LoadingMessage>Cargando préstamos o no hay registros.</LoadingMessage>
+      )}
 
-        <GridItem to="/articulos">
-          <FaBoxOpen size={40} />
-          <Label>Artículos</Label>
-        </GridItem>
-
-        <GridItem to="/edificios">
-          <FaBuilding size={40} />
-          <Label>Edificios</Label>
-        </GridItem>
-
-        <GridItem to="/tablas-auxiliares">
-          <FaTable size={40} />
-          <Label>Tablas auxiliares</Label>
-        </GridItem>
-      </Grid>
+      {!error && data.length > 0 && (
+        <>
+          <SubTitle>Órdenes de Compra con Artículos Pendientes</SubTitle>
+          {pendientes.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <Cell>Orden</Cell>
+                <Cell>Fecha</Cell>
+                <Cell>Codigo de referencia:</Cell>
+                <Cell>Provedor</Cell>
+              </TableHeader>
+              <ScrollableTableBody>
+                {pendientes.map((orden) => (
+                  
+                      <LinkStyled to={`/orden-compra/${orden.id}`}>
+                  <TableRow key={orden.id ?? orden.nombre}>
+                    <Cell>
+                        {orden.id}
+                    </Cell>
+                    <Cell>{orden.fecha}</Cell>
+                    <Cell>{orden.codigo_ref}</Cell>
+                    <Cell>{orden.proveedor.razon_social}</Cell>
+                  </TableRow>
+                      </LinkStyled>
+                ))}
+              </ScrollableTableBody>
+            </Table>
+          ) : (
+            <LoadingMessage>No hay órdenes activas.</LoadingMessage>
+          )}
+        </>
+      )}
     </Container>
   );
 };
 
 export default Home;
 
-// Styled Components
+// --- Estilos ---
 
 const Container = styled.div`
   max-width: 900px;
-  margin: 40px auto;
-  padding: 0 20px;
+  margin: 30px auto;
+  padding: 0 24px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const Title = styled.h1`
   text-align: center;
-  margin-bottom: 10px;
-  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #222;
 `;
 
 const Subtitle = styled.h2`
   text-align: center;
-  margin-bottom: 30px;
+  font-size: 1.1rem;
+  color: #666;
   font-weight: 400;
-  color: #34495e;
+  margin-bottom: 24px;
 `;
 
-const Grid = styled.div`
+const SubTitle = styled.h2`
+  margin-top: 32px;
+  margin-bottom: 16px;
+  color: #2c3e50;
+  border-bottom: 2px solid #2980b9;
+  padding-bottom: 4px;
+  font-weight: 600;
+  font-size: 1rem;
+`;
+
+const TileGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 20px;
 `;
 
-const GridItem = styled(Link)`
-  background: #3498db;
-  color: white;
-  border-radius: 12px;
-  padding: 25px 15px;
-  text-align: center;
-  text-decoration: none;
+const Tile = styled(Link)`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 10px rgba(52, 152, 219, 0.4);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    background: #2980b9;
-    box-shadow: 0 10px 15px rgba(41, 128, 185, 0.6);
-  }
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-decoration: none;
+  color: #444;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  transition: all 0.2s ease;
 
   svg {
-    margin-bottom: 10px;
+    font-size: 30px;
+    margin-bottom: 8px;
+    color: #4a90e2;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    background: #f0f8ff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
 `;
 
-const Label = styled.span`
-  font-weight: 600;
+const Label = styled.div`
   font-size: 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+`;
+
+const ErrorMessage = styled.p`
+  color: #e74c3c;
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+`;
+
+const LoadingMessage = styled.p`
+  text-align: center;
+  color: #34495e;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+`;
+
+const LinkStyled = styled(Link)`
+  text-decoration: none;
+  color: #2980b9;
+  font-weight: 600;
+  font-size: 0.7rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+// --- Tabla ---
+
+const Table = styled.div`
+  margin-top: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.7rem;
+`;
+
+const TableHeader = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #2980b9;
+  color: white;
+  font-weight: 600;
+  padding: 8px 12px;
+`;
+
+const TableRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #fff;
+  padding: 8px 12px;
+  border-top: 1px solid #ddd;
+
+  &:nth-child(even) {
+    background: #f9f9f9;
+  }
+`;
+
+const Cell = styled.div`
+  padding: 2px 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const ScrollableTableBody = styled.div`
+  max-height: 100px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2980b9 #eee;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #eee;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #2980b9;
+    border-radius: 3px;
+  }
 `;

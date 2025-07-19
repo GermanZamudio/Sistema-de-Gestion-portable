@@ -10,16 +10,14 @@ export default function TablasAuxiliares() {
   const [modalTitle, setModalTitle] = useState("");
   const [modalSetState, setModalSetState] = useState(null);
   const [modalUrl, setModalUrl] = useState("");
+  const [camposAuto, setCamposAuto] = useState({});
+  const [campoIgnorado, setCampoIgnorado] = useState([]);
 
   const [proveedores, setProveedores] = useState([]);
-  const [edificio, setEdificio] = useState([]);
-  const [departamento, setDepartamento] = useState([]);
   const [unidadMedida, setUnidadMedida] = useState([]);
   const [marca, setMarca] = useState([]);
   const [categoria, setCategoria] = useState([]);
   const [ubicacion, setUbicacion] = useState([]);
-  const [camposAuto, setCamposAuto] = useState({});
-  const [campoIgnorado, setCampoIgnorado] = useState([]);
 
   const esArrayValido = (data) => Array.isArray(data);
 
@@ -65,67 +63,57 @@ export default function TablasAuxiliares() {
     setCampoIgnorado([]);
   };
 
-  const renderLista = (titulo, items, campo = "nombre") => (
-    <>
-      <SectionTitle>{titulo}</SectionTitle>
-      <ItemList>
-        {!Array.isArray(items) || items.length === 0 ? (
-          <Item>No hay registros.</Item>
-        ) : (
-          items.map((item) => (
-            <Item key={item.id ?? `${campo}-${item[campo]}`}>
-              <Icon>📌</Icon>
-              <ItemText>{item[campo] || "[sin valor]"}</ItemText>
-            </Item>
-          ))
-        )}
-      </ItemList>
-    </>
+  const renderGrupo = (grupoTitulo, listas) => (
+    <Grupo>
+      <GrupoTitulo>{grupoTitulo}</GrupoTitulo>
+      <Grid>
+        {listas.map(({ titulo, items, campo, setState, url }) => (
+          <Lista key={titulo}>
+            <ListaTitulo>
+              {titulo}
+              <Button onClick={() => openModal(titulo, setState, url)}>+</Button>
+            </ListaTitulo>
+            <ul>
+              {items?.length > 0 ? (
+                items.map((item) => (
+                  <li key={item.id ?? item[campo]}>
+                    <LinkItem>
+                      <IconoItem>📘</IconoItem>
+                      {item[campo] || "[sin valor]"}
+                    </LinkItem>
+                  </li>
+                ))
+              ) : (
+                <li>
+                  <LinkItem vacío>No hay registros.</LinkItem>
+                </li>
+              )}
+            </ul>
+          </Lista>
+        ))}
+      </Grid>
+    </Grupo>
   );
 
   return (
     <Container>
-      <PageTitle>Tablas auxiliares</PageTitle>
+      <PageTitle>Tablas Auxiliares</PageTitle>
 
       {error && <MessageError>{error}</MessageError>}
       {mensaje && <MessageSuccess>{mensaje}</MessageSuccess>}
 
-      {renderLista("Categorías", categoria, "nombre")}
-      <Button onClick={() => openModal("Categoria", setCategoria, "categoria")}>
-        Nueva Categoría
-      </Button>
+      {renderGrupo("Empleados", [
+        { titulo: "Categorías", items: categoria, campo: "nombre", setState: setCategoria, url: "categoria" },
+        { titulo: "Unidades de medida", items: unidadMedida, campo: "abreviatura", setState: setUnidadMedida, url: "unidad_medida" },
+        { titulo: "Marcas", items: marca, campo: "nombre", setState: setMarca, url: "marca" },
+      ])}
 
-      {renderLista("Unidades de medida", unidadMedida, "abreviatura")}
-      <Button onClick={() => openModal("Unidades de medida", setUnidadMedida, "unidad_medida")}>
-        Nueva Unidad de medida
-      </Button>
+      {renderGrupo("Cuentas", [
+        { titulo: "Proveedores", items: proveedores, campo: "razon_social", setState: setProveedores, url: "proveedor" },
+        { titulo: "Ubicaciones", items: ubicacion, campo: "nombre", setState: setUbicacion, url: "ubicacion" },
+      ])}
 
-      {renderLista("Marcas", marca, "nombre")}
-      <Button onClick={() => openModal("Marcas", setMarca, "marca")}>
-        Nueva Marca
-      </Button>
-
-      {renderLista("Ubicaciones", ubicacion, "nombre")}
-      <Button onClick={() => openModal("Ubicación", setUbicacion, "ubicacion")}>
-        Nueva Ubicación
-      </Button>
-
-      {renderLista("Proveedores", proveedores, "razon_social")}
-      <Button onClick={() => openModal("Proveedor", setProveedores, "proveedor", ["estado"])}>
-        Nuevo Proveedor
-      </Button>
-
-      {renderLista("Edificios", edificio, "nombre")}
-      <Button onClick={() => openModal("Edificio", setEdificio, "edificio")}>
-        Nuevo Edificio
-      </Button>
-
-      {renderLista("Departamentos", departamento, "nombre")}
-      <Button onClick={() => openModal("Departamento", setDepartamento, "departamento")}>
-        Nuevo Departamento
-      </Button>
-
-      <BackLink href="/home">Volver atrás</BackLink>
+      <BackLink href="/home">← Volver al inicio</BackLink>
 
       {modalOpen && (
         <Modal
@@ -142,82 +130,96 @@ export default function TablasAuxiliares() {
   );
 }
 
-// Styled Components
+// ----------------- Styled Components ------------------
 
-const Container = styled.div`
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 0 24px 60px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+const Container = styled.main`
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 0 20px;
 `;
 
 const PageTitle = styled.h1`
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 30px;
+  font-size: 2rem;
+  color: #0969da;
   text-align: center;
+  margin-bottom: 40px;
 `;
 
-const SectionTitle = styled.h2`
-  font-size: 1.3rem;
-  color: #34495e;
-  margin-top: 40px;
-  margin-bottom: 15px;
-  border-bottom: 2px solid #357edd;
-  padding-bottom: 6px;
+const Grupo = styled.section`
+  margin-bottom: 48px;
+`;
+
+const GrupoTitulo = styled.h2`
+  font-size: 1.2rem;
+  color: #24292f;
   font-weight: 600;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #d0d7de;
+  padding-bottom: 4px;
 `;
 
-const ItemList = styled.div`
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+`;
+
+const Lista = styled.div`
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 16px;
+`;
+
+const ListaTitulo = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0969da;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 `;
 
-const Item = styled.div`
+const LinkItem = styled.div`
   display: flex;
   align-items: center;
-  background-color: #f4f8ff;
-  border: 1px solid #d0dffb;
-  border-radius: 6px;
-  padding: 8px 12px;
   font-size: 0.95rem;
-  color: #34495e;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+  color: #1f6feb;
+  margin-bottom: 6px;
+
+  ${({ vacío }) =>
+    vacío &&
+    `
+    color: #57606a;
+    font-style: italic;
+  `}
 `;
 
-const Icon = styled.span`
-  margin-right: 10px;
-  font-size: 1.2rem;
-`;
-
-const ItemText = styled.span`
-  flex-grow: 1;
+const IconoItem = styled.span`
+  margin-right: 8px;
 `;
 
 const Button = styled.button`
-  margin-top: 10px;
-  padding: 10px 22px;
-  background-color: #357edd;
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
+  background: #2da44e;
   border: none;
-  border-radius: 7px;
+  color: white;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.25s ease;
+  transition: background 0.2s;
 
   &:hover {
-    background-color: #285bb5;
+    background: #218739;
   }
 `;
 
 const BackLink = styled.a`
   display: inline-block;
-  margin-top: 35px;
+  margin-top: 30px;
   font-size: 1rem;
-  color: #357edd;
+  color: #0969da;
   text-decoration: none;
 
   &:hover {
@@ -226,17 +228,15 @@ const BackLink = styled.a`
 `;
 
 const MessageError = styled.p`
-  color: #e74c3c;
+  color: #cf222e;
   font-weight: 600;
-  margin-bottom: 20px;
   text-align: center;
-  font-size: 0.9rem;
+  margin-bottom: 20px;
 `;
 
 const MessageSuccess = styled.p`
-  color: #2ecc71;
+  color: #1a7f37;
   font-weight: 600;
-  margin-bottom: 20px;
   text-align: center;
-  font-size: 0.9rem;
+  margin-bottom: 20px;
 `;

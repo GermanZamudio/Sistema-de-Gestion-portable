@@ -58,7 +58,7 @@ function initDatabase() {
     CREATE TABLE IF NOT EXISTS articulo_identificado (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       codigo TEXT NOT NULL,
-      estado TEXT CHECK (estado IN ('ALTA','BAJA')) DEFAULT 'ALTA',
+      estado TEXT CHECK (estado IN ('ALTA','OBSERVACION','BAJA')) DEFAULT 'ALTA',
       causa TEXT,
       fecha_baja TEXT,
       id_articulo INTEGER,
@@ -174,6 +174,7 @@ function initDatabase() {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     estado TEXT CHECK(estado IN('PRESTADO','DEVUELTO')) DEFAULT 'PRESTADO',
     cantidad INTEGER,
+    cantidad_devuelta INTEGER,
     articulo_id INTEGER,
     prestamo_id INTEGER,
     FOREIGN KEY(prestamo_id) REFERENCES prestamo(id) ON DELETE CASCADE

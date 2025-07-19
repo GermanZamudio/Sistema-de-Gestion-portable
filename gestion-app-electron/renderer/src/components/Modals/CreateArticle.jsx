@@ -2,30 +2,24 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
-  //Estados
   const [data, setData] = useState({});
   const [formValues, setFormValues] = useState({});
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
   const [imageFile, setImageFile] = useState(null);
+  const [tipoArticulo, setTipoArticulo] = useState('STOCK');
 
-  //Campos que se ignoran en el form
-  const camposIgnorados = ['tipo_bien', 'identificable', 'licitacion_id'];
+  const camposIgnorados = ['tipo_bien','identificable', 'licitacion_id'];
 
-  //Traer campos para el formulario
   useEffect(() => {
     async function fetchformArticulos() {
       const response = await window.api.get('/api/generico/form/articulo');
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setData(response);
-      }
+      if (response.error) setError(response.error);
+      else setData(response);
     }
     fetchformArticulos();
   }, []);
 
-  //Resetear valores cuando cambia data.campos
   useEffect(() => {
     if (data.campos) {
       const resetVals = {};
@@ -37,7 +31,6 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
     }
   }, [data]);
 
-  //Resetear formulario al cerrar modal
   useEffect(() => {
     if (!isOpen && data.campos) {
       const valoresVacios = {};
@@ -51,42 +44,33 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
     }
   }, [isOpen, data]);
 
-  //Manejo inputs texto y selects
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  //Manejo input file
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-    } else {
-      setImageFile(null);
-    }
+    setImageFile(file || null);
   };
 
-  //Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('');
     setError('');
 
-    //Armar datos para enviar
     const datosAEnviar = {
       ...formValues,
       identificable: 0,
-      tipo_bien: 'STOCK',
+      tipo_bien: tipoArticulo,
       licitacion: null,
     };
 
-    // Si hay imagen, convertirla a base64 para enviarla
     if (imageFile) {
       try {
         const base64 = await toBase64(imageFile);
-        datosAEnviar.imagen = base64.split(',')[1]; // Quitar el prefijo data:image/xxx;base64,
-      } catch (err) {
+        datosAEnviar.imagen = base64.split(',')[1];
+      } catch {
         setError('Error al procesar la imagen');
         return;
       }
@@ -98,14 +82,11 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
       setError('Error: ' + respuesta.error);
     } else {
       setMensaje('Artículo creado correctamente');
-
-      // Limpiar formulario
       const limpio = {};
       data.campos.forEach((campo) => (limpio[campo] = ''));
       setFormValues(limpio);
       setImageFile(null);
 
-      // Actualizar lista
       const nuevaLista = await window.api.get('/api/generico/articulo');
       if (!nuevaLista.error) setArticulos(nuevaLista.data);
 
@@ -113,7 +94,6 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
     }
   };
 
-  //Función para convertir archivo a base64
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -122,7 +102,6 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
       reader.onerror = (error) => reject(error);
     });
 
-  //Mapa de relaciones
   const relacionesMap = {};
   data.relaciones?.forEach((rel) => {
     relacionesMap[`${rel.nombre}_id`] = rel;
@@ -137,11 +116,22 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
         <Title>{title}</Title>
 
         <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <label htmlFor="tipoArticulo">Seleccionar tipo de artículo</label>
+            <select
+              id="tipoArticulo"
+              value={tipoArticulo}
+              onChange={(e) => setTipoArticulo(e.target.value)}
+            >
+              <option value="STOCK">STOCK</option>
+              <option value="HERRAMIENTA">HERRAMIENTA</option>
+            </select>
+          </FormGroup>
+
           {data.campos &&
             data.campos.map((campo) => {
               if (camposIgnorados.includes(campo)) return null;
 
-              // Campo imagen lo manejamos aparte
               if (campo === 'imagen') {
                 return (
                   <FormGroup key={campo}>
@@ -197,6 +187,7 @@ export default function ModalArticle({ isOpen, title, onClose, setArticulos }) {
     </Overlay>
   );
 }
+
 
 // Styled Components
 

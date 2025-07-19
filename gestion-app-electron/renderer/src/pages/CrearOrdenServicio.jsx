@@ -2,17 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import styled from "styled-components";
 
-export default function CrearOrdenCompra() {
+export default function CrearOrdenServicio() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
   const [departamentos, setDepartamentos] = useState([]);
   const [ubicacion, setUbicacion] = useState([]);
-
   const [articulos, setArticulos] = useState([]);
   const [identificados, setIdentificados] = useState([]);
 
-  // Estado para guardar la imagen seleccionada como base64
+  // Imagen en base64
   const [imagenBase64, setImagenBase64] = useState("");
 
   const { register, control, handleSubmit, reset } = useForm({
@@ -22,15 +21,26 @@ export default function CrearOrdenCompra() {
       responsable: "",
       departamento: "",
       ubicacion: "",
-      articulosAsignados: [{ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" }],
+      articulosStock: [{ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" }],
+      articulosUso: [{ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" }],
+      articulosConsumo: [{ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" }],
       identificadosAsignados: [{ articulo_identificado_id: "", estado: "ASIGNADO" }],
       sobrantesAsignados: [{ sobrante_id: "" }],
     },
   });
 
-  const { fields: articulosFields, append: appendArticulo, remove: removeArticulo } = useFieldArray({
+  // Field arrays separados para cada tipo de artículo
+  const { fields: articulosStockFields, append: appendStock, remove: removeStock } = useFieldArray({
     control,
-    name: "articulosAsignados",
+    name: "articulosStock",
+  });
+  const { fields: articulosUsoFields, append: appendUso, remove: removeUso } = useFieldArray({
+    control,
+    name: "articulosUso",
+  });
+  const { fields: articulosConsumoFields, append: appendConsumo, remove: removeConsumo } = useFieldArray({
+    control,
+    name: "articulosConsumo",
   });
 
   const { fields: identificadosFields, append: appendIdentificado, remove: removeIdentificado } = useFieldArray({
@@ -38,23 +48,25 @@ export default function CrearOrdenCompra() {
     name: "identificadosAsignados",
   });
 
-
   useEffect(() => {
     async function getForms() {
-      const form = await window.api.get("/api/form_orden_servicio");
-      if (form.error) {
-        setError(form.error);
-      } else {
-        setDepartamentos(form.departamentos);
-        setUbicacion(form.ubicacion);
-        setArticulos(form.articulos);
-        setIdentificados(form.articulos_identificados);
+      try {
+        const form = await window.api.get("/api/form_orden_servicio");
+        if (form.error) {
+          setError(form.error);
+        } else {
+          setDepartamentos(form.departamentos);
+          setUbicacion(form.ubicacion);
+          setArticulos(form.articulos);
+          setIdentificados(form.articulos_identificados);
+        }
+      } catch (err) {
+        setError("Error al obtener datos del formulario: " + err.message);
       }
     }
     getForms();
   }, []);
 
-  // Función para leer archivo imagen y convertir a base64
   const handleImagenChange = (e) => {
     const file = e.target.files[0];
     if (!file) {
@@ -63,7 +75,6 @@ export default function CrearOrdenCompra() {
     }
     const reader = new FileReader();
     reader.onloadend = () => {
-      // reader.result es un string base64 con prefijo data:image/...
       setImagenBase64(reader.result);
     };
     reader.readAsDataURL(file);
@@ -89,15 +100,31 @@ export default function CrearOrdenCompra() {
         ubicacion_articulos_id: data.ubicacion,
         fecha: fechaHoy,
         estado: "ACTIVO",
-        imagen: imagenBase64, // <-- aquí agregamos la imagen base64
+        imagen: imagenBase64,
       },
-      articulos_asignados: data.articulosAsignados
-        .filter((a) => a.articulo_id && a.cantidad_asignada)
-        .map((a) => ({
-          articulo_id: Number(a.articulo_id),
-          cantidad_asignada: Number(a.cantidad_asignada),
-          cantidad_entregada: Number(a.cantidad_entregada || 0),
-        })),
+      articulos_asignados: [
+        ...data.articulosStock
+          .filter((a) => a.articulo_id && a.cantidad_asignada)
+          .map((a) => ({
+            articulo_id: Number(a.articulo_id),
+            cantidad_asignada: Number(a.cantidad_asignada),
+            cantidad_entregada: Number(a.cantidad_entregada || 0),
+          })),
+        ...data.articulosUso
+          .filter((a) => a.articulo_id && a.cantidad_asignada)
+          .map((a) => ({
+            articulo_id: Number(a.articulo_id),
+            cantidad_asignada: Number(a.cantidad_asignada),
+            cantidad_entregada: Number(a.cantidad_entregada || 0),
+          })),
+        ...data.articulosConsumo
+          .filter((a) => a.articulo_id && a.cantidad_asignada)
+          .map((a) => ({
+            articulo_id: Number(a.articulo_id),
+            cantidad_asignada: Number(a.cantidad_asignada),
+            cantidad_entregada: Number(a.cantidad_entregada || 0),
+          })),
+      ],
       identificado_asignado: data.identificadosAsignados
         .filter((i) => i.articulo_identificado_id)
         .map((i) => ({
@@ -118,7 +145,7 @@ export default function CrearOrdenCompra() {
       } else {
         setMensaje(respuesta.mensaje);
         reset();
-        setImagenBase64(""); // limpiar la imagen seleccionada
+        setImagenBase64("");
       }
     } catch (err) {
       setError("Error al enviar los datos: " + err.message);
@@ -147,7 +174,7 @@ export default function CrearOrdenCompra() {
           <option value="">Seleccione un Departamento</option>
           {departamentos.map((d) => (
             <option key={d.id} value={d.id}>
-              {d.numero} - {d.piso}
+              {d.numero} - Piso {d.piso}
             </option>
           ))}
         </Select>
@@ -162,22 +189,21 @@ export default function CrearOrdenCompra() {
           ))}
         </Select>
 
-        {/* Campo imagen */}
         <Label>Imagen</Label>
         <Input type="file" accept="image/*" onChange={handleImagenChange} />
         {imagenBase64 && <PreviewImagen src={imagenBase64} alt="Imagen seleccionada" />}
 
-        {/* Artículos dinámicos */}
+        {/* Artículos tipo STOCK */}
         <Section>
           <SectionHeader>
-            <Label>Artículos</Label>
+            <Label>Artículos - STOCK</Label>
             <Comandos>
-              <ButtonSmall type="button" onClick={() => appendArticulo({ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" })}>
+              <ButtonSmall type="button" onClick={() => appendStock({ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" })}>
                 Add +
               </ButtonSmall>
               <ButtonSmall
                 type="button"
-                onClick={() => articulosFields.length > 1 && removeArticulo(articulosFields.length - 1)}
+                onClick={() => articulosStockFields.length > 1 && removeStock(articulosStockFields.length - 1)}
               >
                 Remove −
               </ButtonSmall>
@@ -192,30 +218,32 @@ export default function CrearOrdenCompra() {
               </tr>
             </thead>
             <tbody>
-              {articulosFields.map((field, index) => (
+              {articulosStockFields.map((field, index) => (
                 <Tr key={field.id}>
                   <Td>
-                    <Select {...register(`articulosAsignados.${index}.articulo_id`)}>
+                    <Select {...register(`articulosStock.${index}.articulo_id`)}>
                       <option value="">Seleccione un Artículo</option>
-                      {articulos.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nombre} - Stock: {a.cantidad}
-                        </option>
-                      ))}
+                      {articulos
+                        .filter((a) => a.tipo_bien === "STOCK")
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre} - Stock: {a.cantidad}
+                          </option>
+                        ))}
                     </Select>
                   </Td>
                   <Td>
                     <InputSmall
                       type="number"
                       placeholder="Asignado"
-                      {...register(`articulosAsignados.${index}.cantidad_asignada`)}
+                      {...register(`articulosStock.${index}.cantidad_asignada`)}
                     />
                   </Td>
                   <Td>
                     <InputSmall
                       type="number"
                       placeholder="Entregado"
-                      {...register(`articulosAsignados.${index}.cantidad_entregada`)}
+                      {...register(`articulosStock.${index}.cantidad_entregada`)}
                     />
                   </Td>
                 </Tr>
@@ -224,12 +252,136 @@ export default function CrearOrdenCompra() {
           </Table>
         </Section>
 
-        {/* Identificados dinámicos */}
+        {/* Artículos tipo USO */}
+        <Section>
+          <SectionHeader>
+            <Label>Bienes de Uso</Label>
+            <Comandos>
+              <ButtonSmall type="button" onClick={() => appendUso({ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" })}>
+                Add +
+              </ButtonSmall>
+              <ButtonSmall
+                type="button"
+                onClick={() => articulosUsoFields.length > 1 && removeUso(articulosUsoFields.length - 1)}
+              >
+                Remove −
+              </ButtonSmall>
+            </Comandos>
+          </SectionHeader>
+          <Table>
+            <thead>
+              <tr>
+                <Th>Artículo</Th>
+                <Th>Asignado</Th>
+                <Th>Entregado</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {articulosUsoFields.map((field, index) => (
+                <Tr key={field.id}>
+                  <Td>
+                    <Select {...register(`articulosUso.${index}.articulo_id`)}>
+                      <option value="">Seleccione un bien de uso</option>
+                      {articulos
+                        .filter((a) => a.tipo_bien === "USO")
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre} - Stock: {a.cantidad}
+                          </option>
+                        ))}
+                    </Select>
+                  </Td>
+                  <Td>
+                    <InputSmall
+                      type="number"
+                      placeholder="Asignado"
+                      {...register(`articulosUso.${index}.cantidad_asignada`)}
+                    />
+                  </Td>
+                  <Td>
+                    <InputSmall
+                      type="number"
+                      placeholder="Entregado"
+                      {...register(`articulosUso.${index}.cantidad_entregada`)}
+                    />
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        </Section>
+
+        {/* Artículos tipo CONSUMO */}
+        <Section>
+          <SectionHeader>
+            <Label>Artículos de Consumo</Label>
+            <Comandos>
+              <ButtonSmall
+                type="button"
+                onClick={() => appendConsumo({ articulo_id: "", cantidad_asignada: "", cantidad_entregada: "" })}
+              >
+                Add +
+              </ButtonSmall>
+              <ButtonSmall
+                type="button"
+                onClick={() => articulosConsumoFields.length > 1 && removeConsumo(articulosConsumoFields.length - 1)}
+              >
+                Remove −
+              </ButtonSmall>
+            </Comandos>
+          </SectionHeader>
+          <Table>
+            <thead>
+              <tr>
+                <Th>Artículo</Th>
+                <Th>Asignado</Th>
+                <Th>Entregado</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {articulosConsumoFields.map((field, index) => (
+                <Tr key={field.id}>
+                  <Td>
+                    <Select {...register(`articulosConsumo.${index}.articulo_id`)}>
+                      <option value="">Seleccione un Artículo de consumo</option>
+                      {articulos
+                        .filter((a) => a.tipo_bien === "CONSUMO")
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre} - Stock: {a.cantidad}
+                          </option>
+                        ))}
+                    </Select>
+                  </Td>
+                  <Td>
+                    <InputSmall
+                      type="number"
+                      placeholder="Asignado"
+                      {...register(`articulosConsumo.${index}.cantidad_asignada`)}
+                    />
+                  </Td>
+                  <Td>
+                    <InputSmall
+                      type="number"
+                      placeholder="Entregado"
+                      {...register(`articulosConsumo.${index}.cantidad_entregada`)}
+                    />
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        </Section>
+
+        {/* Artículos Identificados */}
         <Section>
           <SectionHeader>
             <Label>Artículos Identificados</Label>
             <Comandos>
-              <ButtonSmall type="button" onClick={() => appendIdentificado({ articulo_identificado_id: "", estado: "ASIGNADO" })}>
+              <ButtonSmall
+                type="button"
+                onClick={() => appendIdentificado({ articulo_identificado_id: "", estado: "ASIGNADO" })}
+              >
                 Add +
               </ButtonSmall>
               <ButtonSmall
@@ -240,37 +392,36 @@ export default function CrearOrdenCompra() {
               </ButtonSmall>
             </Comandos>
           </SectionHeader>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Artículo Identificado</Th>
-                  <Th>Estado</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {identificadosFields.map((field, index) => (
-                  <Tr key={field.id}>
-                    <Td>
-                      <Select {...register(`identificadosAsignados.${index}.articulo_identificado_id`)}>
-                        <option value="">Seleccione un Artículo Identificado</option>
-                        {identificados.map((i) => (
-                          <option key={i.id} value={i.id}>
-                            Artículo: {i.nombre_articulo} - Código: {i.codigo}
-                          </option>
-                        ))}
-                      </Select>
-                    </Td>
-                    <Td>
-                      <Select {...register(`identificadosAsignados.${index}.estado`)}>
-                        <option value="ASIGNADO">Asignado</option>
-                        <option value="ENTREGADO">Entregado</option>
-                      </Select>
-                    </Td>
-                  </Tr>
-                ))}
-              </tbody>
-            </Table>
-
+          <Table>
+            <thead>
+              <tr>
+                <Th>Artículo Identificado</Th>
+                <Th>Estado</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {identificadosFields.map((field, index) => (
+                <Tr key={field.id}>
+                  <Td>
+                    <Select {...register(`identificadosAsignados.${index}.articulo_identificado_id`)}>
+                      <option value="">Seleccione un Artículo Identificado</option>
+                      {identificados.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          Artículo: {i.nombre_articulo} - Código: {i.codigo}
+                        </option>
+                      ))}
+                    </Select>
+                  </Td>
+                  <Td>
+                    <Select {...register(`identificadosAsignados.${index}.estado`)}>
+                      <option value="ASIGNADO">Asignado</option>
+                      <option value="ENTREGADO">Entregado</option>
+                    </Select>
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
         </Section>
 
         <SubmitButton type="submit">Guardar</SubmitButton>
@@ -329,7 +480,6 @@ const Input = styled.input`
   border-radius: 6px;
 `;
 
-
 const Section = styled.section`
   margin-top: 20px;
   border: 1px solid #ddd;
@@ -346,11 +496,12 @@ const SectionHeader = styled.div`
   flex-wrap: wrap;
   gap: 8px;
 `;
-const Comandos= styled.div`
+
+const Comandos = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`
+`;
 
 const ButtonSmall = styled.button`
   padding: 5px 12px;
@@ -360,21 +511,13 @@ const ButtonSmall = styled.button`
   cursor: pointer;
   border: none;
   border-radius: 6px;
-  background-color: #e67e22; /* naranja */
+  background-color: #e67e22;
   color: white;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #d35400; /* naranja más oscuro */
+    background-color: #d35400;
   }
-`;
-
-const FieldRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-  align-items: center;
 `;
 
 const SubmitButton = styled.button`
@@ -449,7 +592,6 @@ const Select = styled.select`
   border: 1px solid #ccc;
   border-radius: 4px;
 `;
-
 const InputSmall = styled.input`
   width: 100%;
   max-width: 100px;

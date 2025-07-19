@@ -171,7 +171,10 @@ router.get('/orden_compra/:id', (req, res) => {
 //GET
 router.get('/form_orden_compra',(req,res)=>{
   try{
-    const articulos=db.prepare(` SELECT id,nombre FROM articulo WHERE tipo_bien=='STOCK'`).all();
+    const articulos=db.prepare(` SELECT a.id,a.nombre,m.nombre AS marca
+                                  FROM articulo a
+                                  LEFT JOIN marca m ON m.id=a.marca_id
+                                  WHERE tipo_bien IN ('STOCK', 'HERRAMIENTA')`).all();
     const ubicacion=db.prepare(`SELECT id,nombre FROM ubicacion`).all()
     const proveedor=db.prepare('SELECT id,razon_social FROM proveedor WHERE estado==1').all();
     res.json({

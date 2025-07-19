@@ -33,7 +33,7 @@ export default function CrearOrdenCompra() {
         setArticulosOptions(
           (Array.isArray(form.articulos) ? form.articulos : []).map(a => ({
             value: a.id,
-            label: a.nombre
+            label: a.marca ? `${a.nombre} - ${a.marca}` : a.nombre
           }))
         );
         setUbicacionOptions(

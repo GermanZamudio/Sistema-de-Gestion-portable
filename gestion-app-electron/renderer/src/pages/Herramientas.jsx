@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import ModalHerramientas from "../components/Modals/CreateHerramienta"; // Asegurate que sea el modal correcto
 import ModalArticle from "../components/Modals/CreateArticle";
 
 const Container = styled.div`
@@ -103,32 +104,34 @@ const BackLink = styled.a`
   }
 `;
 
-export default function Articulos() {
+export default function Herramientas() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [articulos, setArticulos] = useState([]);
+  const [herramientas, setHerramientas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
+  const [modalOpen2, setModalOpen2] = useState(false);
 
   useEffect(() => {
-    async function fetchArticulos() {
+    async function fetchHerramientas() {
       try {
-        const response = await window.api.get("/api/generico/articulo");
-        if (response.error) {
-          setError(response.error);
-          setArticulos([]);
-        } else if (Array.isArray(response.data)) {
-          setArticulos(response.data);
+        const response = await window.api.get("/api/inventario/existencias/HERRAMIENTA");
+        // Aquí usamos response directo porque el backend responde un arreglo
+        if (Array.isArray(response)) {
+          setHerramientas(response);
           setError("");
+        } else if (response.error) {
+          setError(response.error);
+          setHerramientas([]);
         } else {
           setError("Datos recibidos no son un arreglo.");
-          setArticulos([]);
+          setHerramientas([]);
         }
       } catch (err) {
-        setError("Error al cargar artículos");
-        setArticulos([]);
+        setError("Error al cargar Herramientas");
+        setHerramientas([]);
       }
     }
-    fetchArticulos();
+    fetchHerramientas();
   }, []);
 
   const formatPrecio = (precio) => {
@@ -136,23 +139,32 @@ export default function Articulos() {
     return Number(precio).toFixed(2);
   };
 
-  const filtrados = articulos.filter((a) => {
-    const texto = `${a.nombre} ${a.descripcion} ${a.codigo}`.toLowerCase();
+  // Filtro por búsqueda de nombre, descripción o código
+  const filtrados = herramientas.filter((a) => {
+    const texto = `${a.nombre} ${a.descripcion} ${a.codigo || ""}`.toLowerCase();
     return texto.includes(busqueda.toLowerCase());
   });
 
   return (
     <Container>
-      <Title>Artículos de Stock</Title>
+      <Title>Herramientas</Title>
 
-      <ModalArticle
+      <ModalHerramientas
         isOpen={modalOpen}
-        title="Crear artículo"
+        title="Crear herramienta"
         onClose={() => setModalOpen(false)}
-        setArticulos={setArticulos}
+        setHerramientas={setHerramientas}
       />
 
-      <ButtonNew onClick={() => setModalOpen(true)}>+ Nuevo artículo</ButtonNew>
+      <ButtonNew onClick={() => setModalOpen(true)}>+ Nueva herramienta</ButtonNew>
+
+      <ModalArticle
+        isOpen={modalOpen2}
+        title="Crear artículo"
+        onClose={() => setModalOpen2(false)}
+      />
+
+      <ButtonNew onClick={() => setModalOpen2(true)}>+ Nuevo artículo</ButtonNew>
 
       {error && <ErrorText>{error}</ErrorText>}
 
@@ -175,8 +187,7 @@ export default function Articulos() {
                 <th>Código</th>
                 <th>Descripción</th>
                 <th>Precio</th>
-                <th>Identificable</th>
-                <th>Tipo</th>
+                <th>Existencias</th>
               </tr>
             </thead>
             <tbody>
@@ -184,10 +195,7 @@ export default function Articulos() {
                 <tr key={art.id}>
                   <td>
                     <Img
-                      src={
-                        art.imagen ||
-                        "https://via.placeholder.com/60?text=Sin+imagen"
-                      }
+                      src={art.imagen || "https://via.placeholder.com/60?text=Sin+imagen"}
                       alt={art.nombre}
                     />
                   </td>
@@ -195,8 +203,15 @@ export default function Articulos() {
                   <td>{art.codigo || "-"}</td>
                   <td>{art.descripcion || "-"}</td>
                   <td>${formatPrecio(art.precio)}</td>
-                  <td>{art.identificable ? "Sí" : "No"}</td>
-                  <td>{art.tipo_bien || "-"}</td>
+                  <td>
+                    {art.existencias.length > 0 ? (
+                      <div>
+                        Total: {art.existencias.reduce((acc, ex) => acc + ex.cantidad, 0)}
+                      </div>
+                    ) : (
+                      "Sin existencias"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -205,7 +220,7 @@ export default function Articulos() {
       )}
 
       {filtrados.length === 0 && !error && (
-        <p>No hay artículos para mostrar.</p>
+        <p>No hay herramientas para mostrar.</p>
       )}
 
       <BackLink href="/home">Volver atrás</BackLink>
