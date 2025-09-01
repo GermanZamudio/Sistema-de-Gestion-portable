@@ -17,27 +17,27 @@ export default function ListaPrestamo() {
           setData(response.data);
         }
       } catch (err) {
-        setError("Error al cargar las órdenes de servicio");
+        setError("Error al cargar los préstamos");
       }
     }
     fetchData();
   }, []);
 
-  const searchFilter = (orden) => {
+  const searchFilter = (prestamo) => {
     const q = search.toLowerCase();
     return (
-      orden.nombre?.toLowerCase().includes(q) ||
-      orden.estado?.toLowerCase().includes(q) ||
-      orden.locacion?.toLowerCase().includes(q)
+      prestamo.nombre?.toLowerCase().includes(q) ||
+      prestamo.estado?.toLowerCase().includes(q) ||
+      prestamo.locacion?.toLowerCase().includes(q)
     );
   };
 
-  const PrestamosActivas = data.filter(
-    (orden) => orden.estado === "ACTIVO" && searchFilter(orden)
+  const PrestamosActivos = data.filter(
+    (p) => p.estado === "ACTIVO" && searchFilter(p)
   );
 
   const PrestamosCulminados = data.filter(
-    (orden) => orden.estado === "CULMINADO" && searchFilter(orden)
+    (p) => p.estado === "CULMINADO" && searchFilter(p)
   );
 
   return (
@@ -54,47 +54,65 @@ export default function ListaPrestamo() {
       {error && <ErrorMessage>{error}</ErrorMessage>}
 
       {!error && data.length === 0 && (
-        <LoadingMessage>Cargando préstamos o no hay registros.</LoadingMessage>
+        <LoadingMessage>No hay préstamos para mostrar.</LoadingMessage>
       )}
 
-      {!error && data.length > 0 && (
-        <>
-          <SubTitle>Préstamos Activos</SubTitle>
-          {PrestamosActivas.length > 0 ? (
-            <Grid>
-              {PrestamosActivas.map((orden) => (
-                <Card key={orden.id ?? orden.nombre}>
-                  <LinkStyled to={`/detalle-prestamo/${orden.id}`}>
-                    <OrdenNombre>{orden.nombre}</OrdenNombre>
-                    <Estado>Estado: {orden.estado}</Estado>
-                    <Fecha>Fecha: {orden.fecha}</Fecha>
-                  </LinkStyled>
-                  <Departamento>Locación: {orden.locacion}</Departamento>
-                </Card>
-              ))}
-            </Grid>
-          ) : (
-            <LoadingMessage>No hay préstamos activos.</LoadingMessage>
-          )}
+      {/* === Préstamos Activos === */}
+      <SubTitle>Préstamos Activos</SubTitle>
+      {PrestamosActivos.length > 0 ? (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Razón</Th>
+              <Th>Locación</Th>
+              <Th>Fecha</Th>
+              <Th>Detalle</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {PrestamosActivos.map((p) => (
+              <tr key={p.id}>
+                <Td>{p.nombre}</Td>
+                <Td>{p.locacion}</Td>
+                <Td>{p.fecha}</Td>
+                <Td>
+                  <LinkStyled to={`/detalle-prestamo/${p.id}`}>Ver</LinkStyled>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : (
+        <LoadingMessage>No hay préstamos activos.</LoadingMessage>
+      )}
 
-          <SubTitle>Préstamos Culminados</SubTitle>
-          {PrestamosCulminados.length > 0 ? (
-            <Grid>
-              {PrestamosCulminados.map((orden) => (
-                <Card key={orden.id ?? orden.nombre}>
-                  <LinkStyled to={`/detalle-prestamo/${orden.id}`}>
-                    <OrdenNombre>{orden.nombre}</OrdenNombre>
-                    <Estado>Estado: {orden.estado}</Estado>
-                    <Fecha>Fecha: {orden.fecha}</Fecha>
-                  </LinkStyled>
-                  <Departamento>Locación: {orden.locacion}</Departamento>
-                </Card>
-              ))}
-            </Grid>
-          ) : (
-            <LoadingMessage>No hay préstamos culminados.</LoadingMessage>
-          )}
-        </>
+      {/* === Préstamos Culminados === */}
+      <SubTitle>Préstamos Culminados</SubTitle>
+      {PrestamosCulminados.length > 0 ? (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Razón</Th>
+              <Th>Locación</Th>
+              <Th>Fecha</Th>
+              <Th>Detalle</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {PrestamosCulminados.map((p) => (
+              <tr key={p.id}>
+                <Td>{p.nombre}</Td>
+                <Td>{p.locacion}</Td>
+                <Td>{p.fecha}</Td>
+                <Td>
+                  <LinkStyled to={`/detalle-prestamo/${p.id}`}>Ver</LinkStyled>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : (
+        <LoadingMessage>No hay préstamos culminados.</LoadingMessage>
       )}
 
       <BackLink to="/home">Volver atrás</BackLink>
@@ -102,7 +120,7 @@ export default function ListaPrestamo() {
   );
 }
 
-// Styled components
+// Styled Components
 const Container = styled.div`
   max-width: 900px;
   margin: 40px auto;
@@ -139,6 +157,37 @@ const SubTitle = styled.h2`
   padding-bottom: 5px;
 `;
 
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+`;
+
+const Th = styled.th`
+  text-align: left;
+  padding: 12px;
+  background-color: #2980b9;
+  color: white;
+  font-weight: 600;
+  border-bottom: 2px solid #1c5980;
+`;
+
+const Td = styled.td`
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  color: #34495e;
+`;
+
+const LinkStyled = styled(Link)`
+  color: #2980b9;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const ErrorMessage = styled.p`
   color: #e74c3c;
   text-align: center;
@@ -149,54 +198,6 @@ const LoadingMessage = styled.p`
   text-align: center;
   color: #34495e;
   margin-bottom: 20px;
-`;
-
-const Grid = styled.ul`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  padding-left: 0;
-  list-style: none;
-`;
-
-const Card = styled.li`
-  background: #ecf0f1;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(44, 62, 80, 0.1);
-`;
-
-const LinkStyled = styled(Link)`
-  text-decoration: none;
-  color: #2980b9;
-  font-weight: 600;
-  display: block;
-  margin-bottom: 10px;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const OrdenNombre = styled.div`
-  font-size: 1.2rem;
-  margin-bottom: 5px;
-`;
-
-const Estado = styled.div`
-  font-size: 0.95rem;
-  color: #7f8c8d;
-`;
-
-const Fecha = styled.div`
-  font-size: 0.9rem;
-  color: #95a5a6;
-`;
-
-const Departamento = styled.div`
-  font-size: 0.95rem;
-  color: #34495e;
-  margin-bottom: 10px;
 `;
 
 const BackLink = styled(Link)`

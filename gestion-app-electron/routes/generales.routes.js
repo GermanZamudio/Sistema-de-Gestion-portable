@@ -32,37 +32,49 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/:tabla/', upload.any(), async (req, res) => {
-
   try {
-      console.log('req.body:', req.body);
-  console.log('req.files:', req.files);
+    console.log('-------------------------');
+    console.log('📥 Nueva solicitud POST');
+    console.log('🧭 Tabla objetivo:', req.params.tabla);
+    console.log('📦 req.body:', req.body);
+    console.log('🖼️ req.files:', req.files);
+
     const { tabla } = req.params;
+
     if (!tablasPermitidasPost.includes(tabla)) {
+      console.warn('❌ Tabla no permitida:', tabla);
       return res.status(400).json({ error: 'Tabla no válida' });
     }
-    
+
     // Procesar datos y archivos
     const data = { ...req.body };
+
     if (req.files && req.files.length > 0) {
+      console.log(`📎 Procesando ${req.files.length} archivos...`);
       for (const file of req.files) {
+        console.log(`📁 Archivo procesado - fieldname: ${file.fieldname}, originalname: ${file.originalname}`);
         data[file.fieldname] = file.buffer;
       }
     }
+
     if (Object.keys(data).length === 0) {
-      console.log('Datos recibidos para insertar:', data);
+      console.warn('⚠️ No se recibieron datos');
       return res.status(400).json({ error: 'No estás enviando datos' });
     }
 
-    console.log('Datos recibidos para insertar:', data);
+    console.log('✅ Datos preparados para inserción:', data);
 
     const resultado = await insertRecord(tabla, data);
+
+    console.log('✅ Registro insertado con éxito:', resultado);
     res.status(201).json({ message: `Registro insertado correctamente en la tabla '${tabla}'`, resultado });
 
   } catch (err) {
-    console.error(err);
+    console.error('🔥 Error durante la operación POST:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 //Ruta para obtener todos los registros necesarios para un form 
 router.get('/form/:tabla', (req, res) => {

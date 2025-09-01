@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
-export default function ModalHerramientas({ isOpen, onClose, setHerramientas }) {
+export default function ModalHerramientas({ isOpen, onClose, fetchHerramientas }) {
   const [relaciones, setRelaciones] = useState({ articulos: [], ubicacion: [] });
   const [articulos, setArticulos] = useState([]);
   const [error, setError] = useState("");
@@ -64,7 +64,8 @@ export default function ModalHerramientas({ isOpen, onClose, setHerramientas }) 
         setError(res.error);
       } else {
         onClose();
-        setHerramientas && setHerramientas(prev => [...prev]); // recargar si aplica
+        await fetchHerramientas();
+        
       }
     } catch (err) {
       console.error(err);
@@ -149,7 +150,7 @@ const Overlay = styled.div`
 `;
 const ModalContainer = styled.div`
   background: white;
-  width: 90%;
+  width: 40%;
   max-height: 90vh;
   overflow-y: auto;
   padding: 1.5rem;

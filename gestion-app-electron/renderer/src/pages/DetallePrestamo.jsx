@@ -1,15 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import Select from "react-select";
-
 
 export default function DetallePrestamo() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [ordenCerrada, setOrdenCerrada] = useState(false);
   const [prestamo, setPrestamo] = useState({});
   const [herramientas, setHerramientas] = useState([]);
+  const [cantidadParcial, setCantidadParcial] = useState({});
+  const [erroresPorArticulo, setErroresPorArticulo] = useState({});
+
   const { id } = useParams();
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export default function DetallePrestamo() {
   const fetchData = async () => {
     setError("");
     setMensaje("");
+    setOrdenCerrada(false);
     try {
       const response = await window.api.get(`/api/inventario/prestamo/${id}`);
       if (response.error) {
@@ -27,20 +30,81 @@ export default function DetallePrestamo() {
         setPrestamo(response.prestamo ?? {});
         setHerramientas(Array.isArray(response.articulos_prestados) ? response.articulos_prestados : []);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Error al conectar con el backend.");
     }
   };
 
+  const modificarEntrega = async (item, tipo) => {
+    setError("");
+    setMensaje("");
+    setOrdenCerrada(false);
+    setErroresPorArticulo({});
 
+    try {
+      let response;
+      if (tipo === "parcial") {
+        const cantidad = parseInt(cantidadParcial[item.id], 10);
+        if (isNaN(cantidad) || cantidad <= 0) {
+          setErroresPorArticulo((prev) => ({
+            ...prev,
+            [item.id]: "Cantidad parcial inválida",
+          }));
+          return;
+        }
 
+        response = await window.api.post("/api/inventario/parcial_pendiente_prestamo", {
+          entrega_parcial: {
+            id_articulo_en_prestamo: item.id,
+            id_articulo: item.articulo_id,
+            entregado: cantidad,
+          },
+        });
+      } else if (tipo === "total") {
+        response = await window.api.post("/api/inventario/boton_pendiente_prestamo", {
+          entrega: {
+            id_articulo_prestamo: item.id,
+          },
+        });
+      }
+
+      if (response.error) {
+        setErroresPorArticulo((prev) => ({
+          ...prev,
+          [item.id]: response.error,
+        }));
+      } else {
+        setMensaje(response.message);
+        // Mostrar leyenda si la orden fue cerrada
+        if (response.prestamo_finalizado) {
+          setOrdenCerrada(true);
+        } else {
+          setOrdenCerrada(false);
+        }
+        fetchData();
+        setCantidadParcial({});
+      }
+    } catch (err) {
+      console.error(err);
+      setErroresPorArticulo((prev) => ({
+        ...prev,
+        [item.id]: "Error inesperado al modificar entrega",
+      }));
+    }
+  };
+
+  const handleCantidadChange = (idArticulo, value) => {
+    setCantidadParcial({ ...cantidadParcial, [idArticulo]: value });
+  };
 
   return (
     <Container>
       {mensaje && <MensajeExito>{mensaje}</MensajeExito>}
+      {ordenCerrada && <MensajeOrdenCerrada>✅ La orden se cerró correctamente.</MensajeOrdenCerrada>}
       {error && <MensajeError>{error}</MensajeError>}
 
-      <Titulo>Orden de Prestamo: {prestamo?.nombre ?? "Sin nombre"}</Titulo>
+      <Titulo>Orden de Prestamo: {prestamo?.nombre || "Sin nombre"}</Titulo>
       <Parrafo><strong>Fecha:</strong> {prestamo?.fecha ?? "-"}</Parrafo>
       <Parrafo><strong>Personal encargado:</strong> {prestamo?.autorizado ?? "-"}</Parrafo>
 
@@ -70,6 +134,7 @@ export default function DetallePrestamo() {
               <th>Artículo</th>
               <th>Entregado</th>
               <th>Devuelto</th>
+              <th>Cant. a entregar</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -77,12 +142,43 @@ export default function DetallePrestamo() {
             {herramientas
               .filter(item => item.tipo_bien === "HERRAMIENTA")
               .map((item, index) => {
+                const completado = item.cantidad === item.cantidad_devuelta;
                 return (
                   <tr key={item.id ?? index}>
                     <td>{item.nombre}</td>
                     <td>{item.cantidad}</td>
-                    <td>-</td>
-                    <td>-</td>
+                    <td>{item.cantidad_devuelta}</td>
+                    {completado ? (
+                      <>
+                        <td>-</td>
+                        <td><Completado>Completado</Completado></td>
+                      </>
+                    ) : (
+                      <>
+                        <td>
+                          <div>
+                            <Input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={cantidadParcial[item.id] || ""}
+                              onChange={(e) => handleCantidadChange(item.id, e.target.value)}
+                            />
+                            {erroresPorArticulo[item.id] && (
+                              <ErrorTexto>{erroresPorArticulo[item.id]}</ErrorTexto>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <ButtonAzul onClick={() => modificarEntrega(item, "parcial")}>
+                            Entrega Parcial
+                          </ButtonAzul>
+                          <ButtonVerde onClick={() => modificarEntrega(item, "total")}>
+                            Entrega Total
+                          </ButtonVerde>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
@@ -116,6 +212,23 @@ const MensajeExito = styled.p`
   font-size: 14px;
 `;
 
+const MensajeOrdenCerrada = styled.p`
+  color: #2e7d32;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 15px;
+`;
+
+const Completado = styled.span`
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 13px;
+`;
+
 const MensajeError = styled.p`
   color: red;
   font-weight: 600;
@@ -124,14 +237,34 @@ const MensajeError = styled.p`
   font-size: 14px;
 `;
 
-const ImagenOrden = styled.img`
-  display: block;
-  max-width: 220px;
-  max-height: 180px;
-  margin: 0 auto 15px auto;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15);
-  object-fit: contain;
+const ButtonAzul = styled.button`
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #0d47a1;
+  }
+`;
+const ButtonVerde = styled.button`
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #1b5e20;
+  }
 `;
 
 const Titulo = styled.h1`
@@ -172,54 +305,6 @@ const Tabla = styled.table`
 
   td button {
     margin-right: 5px;
-  }
-`;
-
-const Button = styled.button`
-  background-color: #357edd;
-  color: white;
-  border: none;
-  border-radius: ${(props) => (props.small ? "3px" : "5px")};
-  padding: ${(props) => (props.small ? "2px 6px" : "6px 10px")};
-  font-size: ${(props) => (props.small ? "13px" : "14px")};
-  cursor: pointer;
-  margin: 0 4px 0 0;
-  transition: background-color 0.3s ease;
-
-  &:disabled {
-    background-color: #a6c8ff;
-    cursor: not-allowed;
-  }
-
-  &:hover:not(:disabled) {
-    background-color: #285bb5;
-  }
-`;
-
-const ButtonNew = styled.button`
-  margin-bottom: 15px;
-  padding: 6px 10px;
-  background-color: #e67e22;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #d35400;
-  }
-`;
-
-const Lista = styled.ul`
-  padding-left: 15px;
-  font-size: 14px;
-  margin-bottom: 15px;
-
-  li {
-    margin-bottom: 4px;
   }
 `;
 
@@ -268,3 +353,23 @@ const customSelectStyles = {
     fontSize: "14px",
   }),
 };
+
+const Input = styled.input`
+  width: 60px;
+  padding: 4px 6px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: border 0.2s ease;
+
+  &:focus {
+    border-color: #1976d2;
+  }
+`;
+
+const ErrorTexto = styled.div`
+  color: #d32f2f;
+  font-size: 13px;
+  margin-top: 4px;
+`;

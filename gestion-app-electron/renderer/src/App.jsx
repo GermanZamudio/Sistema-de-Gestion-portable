@@ -16,7 +16,6 @@ import DetallePrestamo from './pages/DetallePrestamo';
 
 import ListaOrdenCompra from './pages/ListaOrdenCompra';
 import OrdenCompra from './pages/OrdenCompra';
-import IngresarCompra from './pages/IngresarOrdenCompra';
 import CrearCompra from './pages/CrearOrdenCompra';
 
 import CrearCategoria from './pages/CrearCategoria';
@@ -27,6 +26,7 @@ import OrdenServicio from './pages/OrdenServicio';
 import CrearOrdenServicio from './pages/CrearOrdenServicio';
 
 import Edificios from './pages/Edificios';
+import Vehiculos from './pages/Vehiculos';
 import Departamento from './pages/Departamento';
 
 import TablasAuxiliares from './pages/TablasAuxiliares';
@@ -67,7 +67,6 @@ function App() {
 
           <Route path="/orden-compra/:id" element={<OrdenCompra />} />
           <Route path="/lista-orden-compra" element={<ListaOrdenCompra />} />
-          <Route path="/ingresar-compra" element={<IngresarCompra />} />
           <Route path="/crear-compra" element={<CrearCompra />} />
 
           <Route path="/crear-categoria" element={<CrearCategoria />} />
@@ -76,6 +75,8 @@ function App() {
           <Route path="/lista-ordenes-servicio" element={<ListaOrdenesServicio />} />
           <Route path="/orden-servicio/:id" element={<OrdenServicio />} />
           <Route path="/crear-orden-servicio" element={<CrearOrdenServicio />} />
+
+          <Route path="/vehiculos" element={<Vehiculos />} />
 
           <Route path="/edificios" element={<Edificios />} />
           <Route path="/departamento/:id" element={<Departamento />} />

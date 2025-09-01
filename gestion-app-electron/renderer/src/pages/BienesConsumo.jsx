@@ -9,25 +9,13 @@ const Container = styled.div`
   font-family: 'Inter', sans-serif;
 `;
 
-const TitleRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 600;
-`;
-
 const CreateButton = styled.button`
   background-color: #28a745;
   color: white;
-  padding: 10px 16px;
-  font-size: 0.95rem;
+  padding: 6px 12px;
+  font-size: 0.85rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
 
   &:hover {
@@ -35,14 +23,20 @@ const CreateButton = styled.button`
   }
 `;
 
+const Title = styled.h1`
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+`;
+
 const SearchInput = styled.input`
-  padding: 10px 14px;
+  padding: 6px 10px;
   width: 100%;
-  max-width: 400px;
-  font-size: 0.95rem;
+  max-width: 350px;
+  font-size: 0.85rem;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  border-radius: 6px;
+  margin-bottom: 20px;
 
   &::placeholder {
     color: #aaa;
@@ -51,63 +45,74 @@ const SearchInput = styled.input`
 
 const ErrorText = styled.p`
   color: red;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  text-align: center;
+`;
+
+const TableWrapper = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.04);
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 6px rgba(0,0,0,0.04);
-`;
-
-const Thead = styled.thead`
-  background-color: #fafafa;
-`;
-
-const Tr = styled.tr`
-  border-top: 1px solid #eee;
-
-  &:first-child {
-    border-top: none;
-  }
 `;
 
 const Th = styled.th`
   text-align: left;
-  padding: 1rem;
+  padding: 0.5rem 0.7rem;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #777;
+  background-color: #fafafa;
 `;
 
 const Td = styled.td`
-  padding: 1rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.8rem;
   vertical-align: top;
 `;
 
-const Imagen = styled.img`
-  width: 64px;
-  height: 64px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 1px solid #ddd;
-`;
+const Tr = styled.tr`
+  border-top: 1px solid #eee;
+  transition: background-color 0.2s ease;
 
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  margin-top: 2rem;
-  font-size: 0.95rem;
-  color: #007bff;
-  cursor: pointer;
-  text-decoration: underline;
+  &:first-child {
+    border-top: none;
+  }
 
   &:hover {
-    color: #0056b3;
+    background-color: #f9f9f9;
+  }
+`;
+
+const ContainerHeader = styled.div`
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+`;
+
+const BackContainer = styled.div`
+  text-align: center;
+`;
+
+const BackLink = styled.a`
+  display: inline-block;
+  margin-top: 20px;
+  color: #1a936f;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  &:hover {
+    text-decoration: underline;
+    background-color: #f1f1f1;
   }
 `;
 
@@ -152,7 +157,6 @@ export default function BienesConsumo() {
   const filasTabla = articulosFiltrados.flatMap((articulo) =>
     articulo.existencias.map((item, i) => ({
       key: `${articulo.id}-${item.existencia_id || i}`,
-      imagen: articulo.imagen,
       nombre: articulo.nombre,
       descripcion: articulo.descripcion,
       ubicacion: item.ubicacion,
@@ -163,58 +167,61 @@ export default function BienesConsumo() {
 
   return (
     <Container>
-      <TitleRow>
-        <Title>Bienes de Consumo</Title>
+      <Title>Bienes de Consumo</Title>
+      <ContainerHeader>
         <CreateButton onClick={() => navigate("/crear-licitacion-consumo")}>
           Crear Licitación
         </CreateButton>
-      </TitleRow>
-
-      <SearchInput
-        type="text"
-        placeholder="Buscar por nombre, descripción o ubicación..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-      />
+        <SearchInput
+          type="text"
+          placeholder="Buscar por nombre, descripción o ubicación..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+      </ContainerHeader>
 
       {error && <ErrorText>{error}</ErrorText>}
 
       {!error && (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>Nombre</Th>
-              <Th>Descripción</Th>
-              <Th>Ubicación</Th>
-              <Th>Cantidad</Th>
-              <Th>Pendiente</Th>
-            </Tr>
-          </Thead>
-          <tbody>
-            {filasTabla.length === 0 ? (
+        <TableWrapper>
+          <Table>
+            <thead>
               <Tr>
-                <Td colSpan="6" style={{ textAlign: "center", padding: "1rem", color: "#999" }}>
-                  No hay bienes que coincidan con la búsqueda.
-                </Td>
+                <Th>Nombre</Th>
+                <Th>Descripción</Th>
+                <Th>Ubicación</Th>
+                <Th>Cantidad</Th>
+                <Th>Pendiente</Th>
               </Tr>
-            ) : (
-              filasTabla.map((fila) => (
-                <Tr key={fila.key}>
-                  <Td>{fila.nombre}</Td>
-                  <Td>{fila.descripcion || "Sin descripción"}</Td>
-                  <Td>{fila.ubicacion}</Td>
-                  <Td>{fila.cantidad}</Td>
-                  <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                    {fila.pendiente}
+            </thead>
+            <tbody>
+              {filasTabla.length === 0 ? (
+                <Tr>
+                  <Td colSpan="5" style={{ textAlign: "center", padding: "1rem", color: "#999" }}>
+                    No hay bienes que coincidan con la búsqueda.
                   </Td>
                 </Tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+              ) : (
+                filasTabla.map((fila) => (
+                  <Tr key={fila.key}>
+                    <Td>{fila.nombre}</Td>
+                    <Td>{fila.descripcion || "Sin descripción"}</Td>
+                    <Td>{fila.ubicacion}</Td>
+                    <Td>{fila.cantidad}</Td>
+                    <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
+                      {fila.pendiente}
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </TableWrapper>
       )}
 
-      <BackButton onClick={() => navigate("/home")}>← Volver al inicio</BackButton>
+      <BackContainer>
+        <BackLink onClick={() => navigate("/home")}>← Volver al inicio</BackLink>
+      </BackContainer>
     </Container>
   );
 }

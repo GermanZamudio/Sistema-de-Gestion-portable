@@ -24,21 +24,19 @@ export default function PrestamoStock() {
     control,
     name: "articulosPrestamo",
   });
-
-  useEffect(() => {
-    async function getForms() {
-      try {
-        const form = await window.api.get("/api/inventario/form/prestamo");
-        if (Array.isArray(form)) {
-          setArticulos(form);
-        } else {
-          setError("Respuesta inválida del servidor.");
-        }
-      } catch (err) {
-        setError("Error al obtener artículos: " + err.message);
-      }
+const getForms = async () => {
+  try {
+    const form = await window.api.get("/api/inventario/form/prestamo");
+    if (Array.isArray(form)) {
+      setArticulos(form);
+    } else {
+      setError("Respuesta inválida del servidor.");
     }
-
+  } catch (err) {
+    setError("Error al obtener artículos: " + err.message);
+  }
+};
+  useEffect(() => {
     getForms();
   }, []);
 
@@ -75,6 +73,7 @@ export default function PrestamoStock() {
       } else {
         setMensaje("Préstamo guardado correctamente.");
         reset();
+        getForms();
       }
     } catch (err) {
       setError("Error al enviar datos: " + err.message);
@@ -89,14 +88,16 @@ export default function PrestamoStock() {
       {error && <MensajeError>{error}</MensajeError>}
 
       <Form onSubmit={handleSubmit(onSubmit)}>
-        <Label>Nombre</Label>
-        <Input {...register("nombre")} />
+        <ContainerHeader>        
+          <Label>Razón</Label>
+          <Input {...register("nombre")} />
 
-        <Label>Personal a cargo</Label>
-        <Input {...register("autorizado")} />
+          <Label>Personal a cargo</Label>
+          <Input {...register("autorizado")} />
 
-        <Label>Locación</Label>
-        <Input {...register("locacion")} />
+          <Label>Locación</Label>
+          <Input {...register("locacion")} />
+        </ContainerHeader>
 
         <Section>
           <SectionHeader>
@@ -136,7 +137,7 @@ export default function PrestamoStock() {
                       {articulos.map((a) => (
                         <option key={a.id} value={a.id}>
                           {a.nombre}{" "}
-                          {a.marca ? `(${a.marca})` : ""} - Stock: {a.cantidad}
+                          {a.marca ? `(${a.marca})` : ""} - Stock: {a.cantidad_disponible}
                         </option>
                       ))}
                     </Select>
@@ -197,6 +198,21 @@ const Form = styled.form`
   gap: 14px;
 `;
 
+const ContainerHeader = styled.div`
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px; /* espacio entre los elementos cuando están en columna */
+  }
+`;
 const Label = styled.label`
   font-size: 15px;
   font-weight: 600;

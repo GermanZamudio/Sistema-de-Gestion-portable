@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import ModalHerramientas from "../components/Modals/CreateHerramienta"; // Asegurate que sea el modal correcto
+import ModalHerramientas from "../components/Modals/CreateHerramienta";
 import ModalArticle from "../components/Modals/CreateArticle";
+import AjustarCantidadModal from "../components/Modals/AjustarCantidad";
 
 const Container = styled.div`
   max-width: 1000px;
   margin: 30px auto;
   padding: 0 20px;
+  font-family: 'Inter', sans-serif;
 `;
 
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 20px;
+const Title = styled.p`
+  font-size: 1.6rem;
+  margin-bottom: 15px;
 `;
 
 const ButtonNew = styled.button`
@@ -20,10 +21,12 @@ const ButtonNew = styled.button`
   color: white;
   font-weight: 500;
   border: none;
-  padding: 10px 20px;
+  padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 20px;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  margin-bottom: 15px;
 
   &:hover {
     background-color: #168765;
@@ -37,11 +40,11 @@ const SearchWrapper = styled.div`
 `;
 
 const SearchInput = styled.input`
-  padding: 10px;
-  font-size: 0.95rem;
+  padding: 6px 10px;
+  font-size: 0.85rem;
   border: 1px solid #dcdcdc;
-  border-radius: 8px;
-  width: 300px;
+  border-radius: 6px;
+  width: 250px;
   outline: none;
   color: #333;
 
@@ -50,36 +53,49 @@ const SearchInput = styled.input`
   }
 `;
 
+const TableWrapper = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.04);
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+`;
 
-  th,
-  td {
-    padding: 14px 16px;
-    text-align: left;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
+const Th = styled.th`
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  font-size: 0.8rem;
+  background-color: #f9f9f9;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+`;
+
+const Td = styled.td`
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  vertical-align: top;
+`;
+
+const Tr = styled.tr`
+  border-top: 1px solid #eee;
+  transition: background-color 0.2s ease;
+
+  &:first-child {
+    border-top: none;
   }
 
-  th {
-    background-color: #f9f9f9;
-    color: #222;
-    font-weight: 600;
-  }
-
-  tr:hover {
+  &:hover {
     background-color: #f8f8f8;
   }
 `;
 
 const Img = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   border-radius: 6px;
   border: 1px solid #e2e2e2;
@@ -89,6 +105,11 @@ const ErrorText = styled.p`
   color: red;
   margin-top: 12px;
   text-align: center;
+  font-size: 0.85rem;
+`;
+
+const BackContainer = styled.div`
+  text-align: center;
 `;
 
 const BackLink = styled.a`
@@ -97,6 +118,7 @@ const BackLink = styled.a`
   color: #1a936f;
   text-decoration: none;
   font-weight: 600;
+  cursor: pointer;
   text-align: center;
 
   &:hover {
@@ -110,27 +132,58 @@ export default function Herramientas() {
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
   const [modalOpen2, setModalOpen2] = useState(false);
+  const [ajusteModalOpen, setAjusteModalOpen] = useState(false);
+  const [herramientaSeleccionada, setHerramientaSeleccionada] = useState(null);
 
-  useEffect(() => {
-    async function fetchHerramientas() {
-      try {
-        const response = await window.api.get("/api/inventario/existencias/HERRAMIENTA");
-        // Aquí usamos response directo porque el backend responde un arreglo
-        if (Array.isArray(response)) {
-          setHerramientas(response);
-          setError("");
-        } else if (response.error) {
-          setError(response.error);
-          setHerramientas([]);
-        } else {
-          setError("Datos recibidos no son un arreglo.");
-          setHerramientas([]);
-        }
-      } catch (err) {
-        setError("Error al cargar Herramientas");
+  const abrirAjusteModal = (herramienta) => {
+    setHerramientaSeleccionada(herramienta);
+    setAjusteModalOpen(true);
+  };
+
+  const confirmarAjuste = async (cantidadAjuste, causa) => {
+    try {
+      const payload = [
+        {
+          id: herramientaSeleccionada.id,
+          cantidad_existencia: cantidadAjuste,
+          causa: causa,
+          ubicacion_id: herramientaSeleccionada.existencias[0]?.ubicacion_id ?? 1,
+        },
+      ];
+      const response = await window.api.post("/api/inventario/ajuste-cant-herramienta", {
+        articulo: payload,
+      });
+      if (response?.mensaje) {
+        // Refrescar herramientas
+        const refreshed = await window.api.get("/api/inventario/existencias/HERRAMIENTA");
+        setHerramientas(refreshed);
+      }
+    } catch (err) {
+      console.error("Error al ajustar cantidad:", err);
+    }
+    setAjusteModalOpen(false);
+  };
+
+  const fetchHerramientas = async () => {
+    try {
+      const response = await window.api.get("/api/inventario/existencias/HERRAMIENTA");
+      if (Array.isArray(response)) {
+        setHerramientas(response);
+        setError("");
+      } else if (response.error) {
+        setError(response.error);
+        setHerramientas([]);
+      } else {
+        setError("Datos recibidos no son un arreglo.");
         setHerramientas([]);
       }
+    } catch (err) {
+      setError("Error al cargar Herramientas");
+      setHerramientas([]);
     }
+  };
+
+  useEffect(() => {
     fetchHerramientas();
   }, []);
 
@@ -139,7 +192,6 @@ export default function Herramientas() {
     return Number(precio).toFixed(2);
   };
 
-  // Filtro por búsqueda de nombre, descripción o código
   const filtrados = herramientas.filter((a) => {
     const texto = `${a.nombre} ${a.descripcion} ${a.codigo || ""}`.toLowerCase();
     return texto.includes(busqueda.toLowerCase());
@@ -153,7 +205,7 @@ export default function Herramientas() {
         isOpen={modalOpen}
         title="Crear herramienta"
         onClose={() => setModalOpen(false)}
-        setHerramientas={setHerramientas}
+        fetchHerramientas={fetchHerramientas}
       />
 
       <ButtonNew onClick={() => setModalOpen(true)}>+ Nueva herramienta</ButtonNew>
@@ -179,51 +231,61 @@ export default function Herramientas() {
             />
           </SearchWrapper>
 
-          <Table>
-            <thead>
-              <tr>
-                <th>Imagen</th>
-                <th>Nombre</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Precio</th>
-                <th>Existencias</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((art) => (
-                <tr key={art.id}>
-                  <td>
-                    <Img
-                      src={art.imagen || "https://via.placeholder.com/60?text=Sin+imagen"}
-                      alt={art.nombre}
-                    />
-                  </td>
-                  <td>{art.nombre}</td>
-                  <td>{art.codigo || "-"}</td>
-                  <td>{art.descripcion || "-"}</td>
-                  <td>${formatPrecio(art.precio)}</td>
-                  <td>
-                    {art.existencias.length > 0 ? (
-                      <div>
-                        Total: {art.existencias.reduce((acc, ex) => acc + ex.cantidad, 0)}
-                      </div>
-                    ) : (
-                      "Sin existencias"
-                    )}
-                  </td>
+          <TableWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <Th>Imagen</Th>
+                  <Th>Nombre</Th>
+                  <Th>Código</Th>
+                  <Th>Descripción</Th>
+                  <Th>Precio</Th>
+                  <Th>Existencias</Th>
+                  <Th>Acciones</Th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {filtrados.map((art) => (
+                  <Tr key={art.id}>
+                    <Td>
+                      <Img
+                        src={art.imagen || "https://via.placeholder.com/48?text=Sin+imagen"}
+                        alt={art.nombre}
+                      />
+                    </Td>
+                    <Td>{art.nombre}</Td>
+                    <Td>{art.codigo || "-"}</Td>
+                    <Td>{art.descripcion || "-"}</Td>
+                    <Td>${formatPrecio(art.precio)}</Td>
+                    <Td>
+                      {art.existencias.length > 0
+                        ? `Total: ${art.existencias.reduce((acc, ex) => acc + ex.cantidad, 0)}`
+                        : "Sin existencias"}
+                    </Td>
+                    <Td>
+                      <ButtonNew onClick={() => abrirAjusteModal(art)}>Ajustar</ButtonNew>
+                      <ButtonNew>Eliminar</ButtonNew>
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrapper>
         </>
       )}
 
-      {filtrados.length === 0 && !error && (
-        <p>No hay herramientas para mostrar.</p>
-      )}
+      {filtrados.length === 0 && !error && <p>No hay herramientas para mostrar.</p>}
 
-      <BackLink href="/home">Volver atrás</BackLink>
+      <AjustarCantidadModal
+        isOpen={ajusteModalOpen}
+        onClose={() => setAjusteModalOpen(false)}
+        onConfirm={confirmarAjuste}
+        articulo={herramientaSeleccionada}
+      />
+
+      <BackContainer>
+        <BackLink href="/home">← Volver al inicio</BackLink>
+      </BackContainer>
     </Container>
   );
 }

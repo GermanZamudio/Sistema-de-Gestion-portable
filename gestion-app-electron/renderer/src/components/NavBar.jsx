@@ -13,12 +13,13 @@ import {
   FaPlusCircle,
   FaClipboardList,
   FaFileAlt,
-  FaFileMedical,  // corregido aquí
+  FaFileMedical,
   FaTags,
   FaBuilding,
   FaTable,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaCar
 } from "react-icons/fa";
 
 // Ícono de marca
@@ -57,6 +58,7 @@ export default function NavBar() {
         <StyledLink to="/lista-ordenes-servicio" collapsed={collapsed}><FaFileAlt /> {!collapsed && 'Órdenes Servicio'}</StyledLink>
         <StyledLink to="/articulos" collapsed={collapsed}><FaTags /> {!collapsed && 'Artículos'}</StyledLink>
         <StyledLink to="/edificios" collapsed={collapsed}><FaBuilding /> {!collapsed && 'Edificios'}</StyledLink>
+        <StyledLink to="/vehiculos" collapsed={collapsed}><FaCar /> {!collapsed && 'Vehículos'}</StyledLink>
         <StyledLink to="/tablas-auxiliares" collapsed={collapsed}><FaTable /> {!collapsed && 'Tablas Auxiliares'}</StyledLink>
       </Menu>
     </Sidebar>
@@ -144,3 +146,4 @@ const CollapseBtn = styled.button`
     color: #58a6ff;
   }
 `;
+

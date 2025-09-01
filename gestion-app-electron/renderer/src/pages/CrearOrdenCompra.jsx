@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import ReactSelect from 'react-select';
+import ModalArticle from "../components/Modals/CreateArticle";
+import { FiPlus, FiMinus, FiArrowLeft, FiSave, FiFilePlus } from 'react-icons/fi';
 
 export default function CrearOrdenCompra() {
   const [error, setError] = useState("");
@@ -9,42 +11,30 @@ export default function CrearOrdenCompra() {
   const [articulosOptions, setArticulosOptions] = useState([]);
   const [ubicacionOptions, setUbicacionOptions] = useState([]);
   const [selectsArticulos, setSelectsArticulos] = useState([0]);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Nuevo estado
   const [codigoRef, setCodigoRef] = useState("");
-
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-  const [articulosSeleccionados, setArticulosSeleccionados] = useState(
-    [{ articulo: null, cantidadPedida: "", cantidadRecibida: "", ubicacion: null }]
-  );
+  const [articulosSeleccionados, setArticulosSeleccionados] = useState([
+    { articulo: null, cantidadPedida: "", cantidadRecibida: "", ubicacion: null }
+  ]);
+
+  const fetchArticulos = async () => {
+    const form = await window.api.get('/api/form_orden_compra');
+    if (form.error) {
+      setError(form.error);
+    } else {
+      setProveedorOptions((form.proveedor || []).map(p => ({ value: p.id, label: p.razon_social })));
+      setArticulosOptions((form.articulos || []).map(a => ({
+        value: a.id,
+        label: a.marca ? `${a.nombre} - ${a.marca}` : a.nombre
+      })));
+      setUbicacionOptions((form.ubicacion || []).map(u => ({ value: u.id, label: u.nombre })));
+    }
+  };
 
   useEffect(() => {
-    async function getForm() {
-      const form = await window.api.get('/api/form_orden_compra');
-      if (form.error) {
-        setError(form.error);
-      } else {
-        setProveedorOptions(
-          (Array.isArray(form.proveedor) ? form.proveedor : []).map(p => ({
-            value: p.id,
-            label: p.razon_social
-          }))
-        );
-        setArticulosOptions(
-          (Array.isArray(form.articulos) ? form.articulos : []).map(a => ({
-            value: a.id,
-            label: a.marca ? `${a.nombre} - ${a.marca}` : a.nombre
-          }))
-        );
-        setUbicacionOptions(
-          (Array.isArray(form.ubicacion) ? form.ubicacion : []).map(u => ({
-            value: u.id,
-            label: u.nombre
-          }))
-        );
-      }
-    }
-    getForm();
+    fetchArticulos();
   }, []);
 
   const handleAdd = () => {
@@ -68,8 +58,24 @@ export default function CrearOrdenCompra() {
   const handleInputChange = (e, index) => {
     const { name, value } = e.target;
     const nuevos = [...articulosSeleccionados];
-    if (name === 'cantidadPedida') nuevos[index].cantidadPedida = value;
-    else if (name === 'cantidadRecibida') nuevos[index].cantidadRecibida = value;
+
+    // Validación: cantidadRecibida no puede superar cantidadPedida
+    if (name === "cantidadRecibida") {
+      const cantidadPedida = Number(nuevos[index].cantidadPedida) || 0;
+      let cantidadRecibida = Number(value) || 0;
+
+      if (cantidadRecibida > cantidadPedida) {
+        cantidadRecibida = cantidadPedida;
+        setMensaje(`La cantidad recibida no puede superar la cantidad pedida (${cantidadPedida})`);
+      } else {
+        setMensaje("");
+      }
+
+      nuevos[index][name] = cantidadRecibida;
+    } else {
+      nuevos[index][name] = value;
+    }
+
     setArticulosSeleccionados(nuevos);
   };
 
@@ -84,37 +90,33 @@ export default function CrearOrdenCompra() {
     setError("");
     setMensaje("");
 
-    if (!proveedorSeleccionado) {
-      setError("Debe seleccionar un proveedor");
-      return;
-    }
+    if (!proveedorSeleccionado) return setError("Debe seleccionar un proveedor");
+    if (!codigoRef.trim()) return setError("Debe ingresar un código de referencia");
 
-    if (!codigoRef.trim()) {
-      setError("Debe ingresar un código de referencia");
-      return;
-    }
+    let articulos_comprados;
 
-    const articulos_comprados = articulosSeleccionados.map((item, idx) => {
-      if (!item.articulo || item.cantidadPedida === "") {
-        setError(`Debe seleccionar artículo y cantidad pedida válida en el artículo ${idx + 1}`);
-        throw new Error("Campo inválido");
-      }
-      if (isNaN(item.cantidadPedida) || (item.cantidadRecibida !== "" && isNaN(item.cantidadRecibida))) {
-        setError(`Las cantidades deben ser números válidos en el artículo ${idx + 1}`);
-        throw new Error("Cantidad inválida");
-      }
+    try {
+      articulos_comprados = articulosSeleccionados.map((item, idx) => {
+        if (!item.articulo || item.cantidadPedida === "")
+          throw new Error(`Debe seleccionar artículo y cantidad pedida válida en el artículo ${idx + 1}`);
+        if (isNaN(item.cantidadPedida) || (item.cantidadRecibida !== "" && isNaN(item.cantidadRecibida)))
+          throw new Error(`Las cantidades deben ser números válidos en el artículo ${idx + 1}`);
 
-      return {
-        articulo_id: item.articulo.value,
-        cantidad_pedida: Number(item.cantidadPedida),
-        cantidad_recibida: item.cantidadRecibida === "" ? 0 : Number(item.cantidadRecibida),
-        ubicacion_id: item.ubicacion ? item.ubicacion.value : null,
-      };
-    });
+        const cantPedida = Number(item.cantidadPedida);
+        const cantRecibida = item.cantidadRecibida === "" ? 0 : Number(item.cantidadRecibida);
 
-    if (articulos_comprados.length === 0) {
-      setError("Debe agregar al menos un artículo con cantidad");
-      return;
+        if (cantRecibida > cantPedida)
+          throw new Error(`La cantidad recibida no puede superar la cantidad pedida en el artículo ${idx + 1}`);
+
+        return {
+          articulo_id: item.articulo.value,
+          cantidad_pedida: cantPedida,
+          cantidad_recibida: cantRecibida,
+          ubicacion_id: item.ubicacion ? item.ubicacion.value : null
+        };
+      });
+    } catch (err) {
+      return setError(err.message);
     }
 
     const fechaHoy = new Date().toISOString().split('T')[0];
@@ -122,7 +124,7 @@ export default function CrearOrdenCompra() {
       orden_compra: {
         fecha: fechaHoy,
         proveedor_id: proveedorSeleccionado.value,
-        codigo_ref: codigoRef,  // ✅ NUEVO CAMPO
+        codigo_ref: codigoRef,
         total: 0,
       },
       articulos_comprados,
@@ -135,7 +137,7 @@ export default function CrearOrdenCompra() {
       } else {
         setMensaje("Orden de compra creada correctamente");
         setProveedorSeleccionado(null);
-        setCodigoRef("");  // ✅ Limpiar campo
+        setCodigoRef("");
         setSelectsArticulos([0]);
         setArticulosSeleccionados([{ articulo: null, cantidadPedida: "", cantidadRecibida: "", ubicacion: null }]);
       }
@@ -147,48 +149,68 @@ export default function CrearOrdenCompra() {
   return (
     <Container>
       <Title>Crear Orden de Compra</Title>
-
       {error && <MensajeError>{error}</MensajeError>}
       {mensaje && <MensajeSuccess>{mensaje}</MensajeSuccess>}
 
+      <ModalArticle
+        isOpen={modalOpen}
+        title="Crear artículo"
+        onClose={async () => {
+          setModalOpen(false);
+          await fetchArticulos();
+        }}
+      />
+
+      <ButtonNew type="button" onClick={() => setModalOpen(true)}>
+        <FiFilePlus style={{ marginRight: "6px" }} />
+        Nuevo artículo
+      </ButtonNew>
+
       <Form onSubmit={handleSubmit}>
-        <Section>
-          <SectionTitle>Proveedor</SectionTitle>
-          <ReactSelect
-            options={proveedorOptions}
-            value={proveedorSeleccionado}
-            onChange={setProveedorSeleccionado}
-            placeholder="Seleccione un proveedor"
-          />
-        </Section>
+        <ContenedorProveedor>
+          <Section>
+            <SectionTitle>Proveedor</SectionTitle>
+            <ReactSelect
+              options={proveedorOptions}
+              value={proveedorSeleccionado}
+              onChange={setProveedorSeleccionado}
+              placeholder="Seleccione un proveedor"
+            />
+          </Section>
 
-        <Section>
-          <SectionTitle>Código de Referencia</SectionTitle>
-          <Input
-            type="text"
-            placeholder="Ej: OC-00123"
-            value={codigoRef}
-            onChange={(e) => setCodigoRef(e.target.value)}
-          />
-        </Section>
-
+          <Section>
+            <SectionTitle>Código de Referencia</SectionTitle>
+            <Input
+              type="text"
+              placeholder="Ej: OC-00123"
+              value={codigoRef}
+              onChange={(e) => setCodigoRef(e.target.value)}
+            />
+          </Section>
+        </ContenedorProveedor>  
         <Divider />
 
         <Section>
           <SectionTitle>Artículos</SectionTitle>
+
           <ButtonRow>
-            <Button type="button" onClick={handleAdd}>Agregar Artículo</Button>
-            <Button type="button" onClick={handleDelete}>Quitar Último</Button>
+            <Button type="button" onClick={handleAdd}>
+              <FiPlus style={{ marginRight: "6px" }} />
+              Agregar Artículo
+            </Button>
+            <Button type="button" onClick={handleDelete}>
+              <FiMinus style={{ marginRight: "6px" }} />
+              Quitar Último
+            </Button>
           </ButtonRow>
 
           {selectsArticulos.map((id, index) => (
             <ArticuloRow key={id}>
               <ReactSelect
                 options={articulosOptions}
-                value={articulosSeleccionados[index]?.articulo || null}
-                onChange={(selectedOption) => handleArticuloChange(selectedOption, index)}
+                value={articulosSeleccionados[index]?.articulo}
+                onChange={(selected) => handleArticuloChange(selected, index)}
                 placeholder="Seleccione un artículo"
-                styles={{ container: base => ({ ...base, flex: '1 1 200px' }) }}
               />
               <Input
                 type="number"
@@ -196,6 +218,7 @@ export default function CrearOrdenCompra() {
                 placeholder="Cantidad comprada"
                 value={articulosSeleccionados[index]?.cantidadPedida}
                 onChange={(e) => handleInputChange(e, index)}
+                min="1"
               />
               <Input
                 type="number"
@@ -203,13 +226,14 @@ export default function CrearOrdenCompra() {
                 placeholder="Cantidad recibida"
                 value={articulosSeleccionados[index]?.cantidadRecibida}
                 onChange={(e) => handleInputChange(e, index)}
+                min="0"
+                max={articulosSeleccionados[index]?.cantidadPedida || ""}
               />
               <ReactSelect
                 options={ubicacionOptions}
-                value={articulosSeleccionados[index]?.ubicacion || null}
-                onChange={(selectedOption) => handleUbicacionChange(selectedOption, index)}
+                value={articulosSeleccionados[index]?.ubicacion}
+                onChange={(selected) => handleUbicacionChange(selected, index)}
                 placeholder="Seleccione ubicación"
-                styles={{ container: base => ({ ...base, flex: '1 1 200px' }) }}
                 isClearable
               />
             </ArticuloRow>
@@ -217,59 +241,106 @@ export default function CrearOrdenCompra() {
         </Section>
 
         <Divider />
+        <ContenedorButtons>
+          <SubmitButton type="submit">
+            <FiSave style={{ marginRight: "6px" }} />
+            Guardar
+          </SubmitButton>
 
-        <SubmitButton type="submit">Guardar</SubmitButton>
+          <BackLink href="/home">
+            <FiArrowLeft style={{ marginRight: "6px" }} />
+            Volver atrás
+          </BackLink>
+        </ContenedorButtons>
       </Form>
-
-      <BackLink href="/home">← Volver atrás</BackLink>
     </Container>
   );
 }
 
-// Styled Components
+// ==== ESTILOS ====
+
+const ContenedorProveedor = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  flex-wrap: wrap;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+  }
+`;
+const ContenedorButtons = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
 const Container = styled.div`
-  max-width: 850px;
-  margin: 40px auto;
-  padding: 35px;
-  background: #fcfcfc;
-  border-radius: 12px;
-  box-shadow: 0 0 14px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', sans-serif;
 `;
 
 const Title = styled.h1`
-  text-align: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 36px;
-  margin-bottom: 30px;
+  font-size: 22px;
   font-weight: 600;
+  margin-bottom: 16px;
   color: #2c3e50;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 6px;
 `;
 
 const MensajeError = styled.p`
-  color: red;
-  font-weight: bold;
+  color: #c0392b;
+  background: #fdecea;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 14px;
 `;
 
 const MensajeSuccess = styled.p`
-  color: green;
-  font-weight: bold;
+  color: #27ae60;
+  background: #e9f7ef;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 14px;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 `;
 
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 20px;
-  margin-bottom: 8px;
+  font-size: 16px;
   color: #34495e;
   font-weight: 600;
 `;
@@ -277,74 +348,111 @@ const SectionTitle = styled.h3`
 const Divider = styled.hr`
   border: none;
   height: 1px;
-  background-color: #ddd;
-  margin: 20px 0;
+  background-color: #eee;
+  margin: 16px 0;
 `;
 
 const Input = styled.input`
-  padding: 10px;
-  border-radius: 6px;
-  border: 1.5px solid #ccc;
-  width: 100px;
-`;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  width: 100%;
 
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.3);
+  }
+`;
 const ArticuloRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  align-items: center;
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 2fr;
   gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Button = styled.button`
-  background-color: #e67e22;
-  border: none;
+  background-color: #f39c12;
   color: white;
-  padding: 10px 16px;
-  border-radius: 8px;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
 
   &:hover {
-    background-color: #d35400;
+    background-color: #e67e22;
   }
 `;
 
 const SubmitButton = styled.button`
-  background-color: #2980b9;
-  border: none;
+  background-color: #3498db;
   color: white;
-  padding: 14px;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 14px;
   font-weight: bold;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
   cursor: pointer;
-  font-size: 16px;
 
   &:hover {
-    background-color: #1f6391;
+    background-color: #2980b9;
   }
 `;
 
 const BackLink = styled.a`
   display: block;
   margin-top: 20px;
-  color: #555;
-  text-decoration: underline;
-  text-align: center;
-  font-size: 15px;
+  color: #7f8c8d;
+  text-decoration: none;
+  font-size: 13px;
+  text-align: left;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
 
   &:hover {
-    color: #000;
+    text-decoration: underline;
+    color: #2c3e50;
+  }
+`;
+
+const ButtonNew = styled.button`
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-weight: 500;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover {
+    background-color: #27ae60;
   }
 `;

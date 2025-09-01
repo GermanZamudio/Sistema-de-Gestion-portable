@@ -1,79 +1,101 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import ModalArticle from "../components/Modals/CreateArticle";
 
 const Container = styled.div`
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 30px auto;
-  padding: 0 20px;
+  padding: 0 24px;
+  font-family: 'Inter', sans-serif;
 `;
 
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 20px;
+const Title = styled.p`
+  font-size: 1.8rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
 `;
 
-const ButtonNew = styled.button`
-  background-color: #1a936f;
+const CreateButton = styled.button`
+  background-color: #28a745;
   color: white;
-  font-weight: 500;
+  padding: 8px 12px;
+  font-size: 0.85rem;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 20px;
 
   &:hover {
-    background-color: #168765;
+    background-color: #218838;
   }
-`;
-
-const SearchWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
 `;
 
 const SearchInput = styled.input`
-  padding: 10px;
-  font-size: 0.95rem;
-  border: 1px solid #dcdcdc;
+  padding: 8px 12px;
+  width: 100%;
+  max-width: 350px;
+  font-size: 0.85rem;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  width: 300px;
-  outline: none;
-  color: #333;
 
   &::placeholder {
-    color: #b2b2b2;
+    color: #aaa;
   }
+`;
+
+const ContainerHeader = styled.div`
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+`;
+
+const TableWrapper = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.04);
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 0.5rem;
+`;
 
-  th,
-  td {
-    padding: 14px 16px;
-    text-align: left;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
+const Thead = styled.thead`
+  background-color: #fafafa;
+`;
+
+const Tr = styled.tr`
+  border-top: 1px solid #eee;
+
+  &:first-child {
+    border-top: none;
   }
 
-  th {
+  &:hover {
     background-color: #f9f9f9;
-    color: #222;
-    font-weight: 600;
   }
+`;
 
-  tr:hover {
-    background-color: #f8f8f8;
-  }
+const Th = styled.th`
+  text-align: left;
+  padding: 0.5rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #777;
+`;
+
+const Td = styled.td`
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  vertical-align: top;
 `;
 
 const Img = styled.img`
@@ -86,6 +108,7 @@ const Img = styled.img`
 
 const ErrorText = styled.p`
   color: red;
+  font-size: 0.85rem;
   margin-top: 12px;
   text-align: center;
 `;
@@ -104,10 +127,10 @@ const BackLink = styled.a`
 `;
 
 export default function Articulos() {
-  const [modalOpen, setModalOpen] = useState(false);
   const [articulos, setArticulos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchArticulos() {
@@ -131,20 +154,22 @@ export default function Articulos() {
     fetchArticulos();
   }, []);
 
-  const formatPrecio = (precio) => {
-    if (precio == null) return "0.00";
-    return Number(precio).toFixed(2);
-  };
+  const filtro = busqueda.toLowerCase();
 
-  const filtrados = articulos.filter((a) => {
-    const texto = `${a.nombre} ${a.descripcion} ${a.codigo}`.toLowerCase();
-    return texto.includes(busqueda.toLowerCase());
-  });
+  const articulosFiltrados = useMemo(() => {
+    return articulos.filter((art) => {
+      const texto = `${art.nombre} ${art.descripcion} ${art.codigo}`.toLowerCase();
+      return texto.includes(filtro);
+    });
+  }, [articulos, filtro]);
+
+  const formatPrecio = (precio) => (precio == null ? "0.00" : Number(precio).toFixed(2));
 
   return (
     <Container>
-      <Title>Artículos de Stock</Title>
+      <Title>Artículos creados</Title>
 
+      {/* Modal original */}
       <ModalArticle
         isOpen={modalOpen}
         title="Crear artículo"
@@ -152,63 +177,63 @@ export default function Articulos() {
         setArticulos={setArticulos}
       />
 
-      <ButtonNew onClick={() => setModalOpen(true)}>+ Nuevo artículo</ButtonNew>
+      <ContainerHeader>
+        <CreateButton onClick={() => setModalOpen(true)}>+ Nuevo artículo</CreateButton>
+        <SearchInput
+          type="text"
+          placeholder="Buscar por nombre, código o descripción"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+      </ContainerHeader>
 
       {error && <ErrorText>{error}</ErrorText>}
 
-      {filtrados.length > 0 && (
-        <>
-          <SearchWrapper>
-            <SearchInput
-              type="text"
-              placeholder="Buscar por nombre, código o descripción"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-          </SearchWrapper>
-
+      {!error && (
+        <TableWrapper>
           <Table>
-            <thead>
-              <tr>
-                <th>Imagen</th>
-                <th>Nombre</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Precio</th>
-                <th>Identificable</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
+            <Thead>
+              <Tr>
+                <Th>Imagen</Th>
+                <Th>Nombre</Th>
+                <Th>Código</Th>
+                <Th>Descripción</Th>
+                <Th>Precio</Th>
+                <Th>Identificable</Th>
+                <Th>Tipo</Th>
+              </Tr>
+            </Thead>
             <tbody>
-              {filtrados.map((art) => (
-                <tr key={art.id}>
-                  <td>
-                    <Img
-                      src={
-                        art.imagen ||
-                        "https://via.placeholder.com/60?text=Sin+imagen"
-                      }
-                      alt={art.nombre}
-                    />
-                  </td>
-                  <td>{art.nombre}</td>
-                  <td>{art.codigo || "-"}</td>
-                  <td>{art.descripcion || "-"}</td>
-                  <td>${formatPrecio(art.precio)}</td>
-                  <td>{art.identificable ? "Sí" : "No"}</td>
-                  <td>{art.tipo_bien || "-"}</td>
-                </tr>
-              ))}
+              {articulosFiltrados.length === 0 ? (
+                <Tr>
+                  <Td colSpan="7" style={{ textAlign: "center", padding: "1rem", color: "#999" }}>
+                    No hay artículos que coincidan con la búsqueda.
+                  </Td>
+                </Tr>
+              ) : (
+                articulosFiltrados.map((art) => (
+                  <Tr key={art.id}>
+                    <Td>
+                      <Img
+                        src={art.imagen || "https://via.placeholder.com/60?text=Sin+imagen"}
+                        alt={art.nombre}
+                      />
+                    </Td>
+                    <Td>{art.nombre}</Td>
+                    <Td>{art.codigo || "-"}</Td>
+                    <Td>{art.descripcion || "-"}</Td>
+                    <Td>${formatPrecio(art.precio)}</Td>
+                    <Td>{art.identificable ? "Sí" : "No"}</Td>
+                    <Td>{art.tipo_bien || "-"}</Td>
+                  </Tr>
+                ))
+              )}
             </tbody>
           </Table>
-        </>
+        </TableWrapper>
       )}
 
-      {filtrados.length === 0 && !error && (
-        <p>No hay artículos para mostrar.</p>
-      )}
-
-      <BackLink href="/home">Volver atrás</BackLink>
+      <BackLink href="/home">← Volver atrás</BackLink>
     </Container>
   );
 }

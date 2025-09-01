@@ -48,22 +48,36 @@ export default function CrearOrdenServicio() {
     name: "identificadosAsignados",
   });
 
-  useEffect(() => {
-    async function getForms() {
-      try {
-        const form = await window.api.get("/api/form_orden_servicio");
-        if (form.error) {
-          setError(form.error);
-        } else {
-          setDepartamentos(form.departamentos);
-          setUbicacion(form.ubicacion);
-          setArticulos(form.articulos);
-          setIdentificados(form.articulos_identificados);
+  //Creamos funcion para restablecer datos del form
+  async function getForms() {
+        try {
+          const form = await window.api.get("/api/form_orden_servicio");
+          if (form.error) {
+            setError(form.error);
+          } else {
+            setDepartamentos(form.departamentos);
+            setUbicacion(form.ubicacion);
+            setArticulos(form.articulos);
+            setIdentificados(form.articulos_identificados);
+          }
+        } catch (err) {
+          setError("Error al obtener datos del formulario: " + err.message);
         }
-      } catch (err) {
-        setError("Error al obtener datos del formulario: " + err.message);
       }
+  //Restablecer mensajes
+  useEffect(() => {
+    if (error || mensaje) {
+      const timer = setTimeout(() => {
+        setError("");
+        setMensaje("");
+      }, 6000); // 5 segundos
+
+      return () => clearTimeout(timer); // limpia el timeout si el componente se desmonta
     }
+  }, [error, mensaje]);
+
+  //Llamada a getForms
+  useEffect(() => {
     getForms();
   }, []);
 
@@ -142,11 +156,14 @@ export default function CrearOrdenServicio() {
       const respuesta = await window.api.post("/api/form_orden_servicio/", datosEnviar);
       if (respuesta.error) {
         setError(respuesta.error);
+        console.log(error)
       } else {
-        setMensaje(respuesta.mensaje);
+        setMensaje(respuesta.message);
         reset();
         setImagenBase64("");
+        getForms();
       }
+      
     } catch (err) {
       setError("Error al enviar los datos: " + err.message);
     }
@@ -155,9 +172,6 @@ export default function CrearOrdenServicio() {
   return (
     <Container>
       <Title>Crear Orden de Servicio</Title>
-
-      {mensaje && <MensajeExito>{mensaje}</MensajeExito>}
-      {error && <MensajeError>{error}</MensajeError>}
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Label>Nombre</Label>
@@ -169,17 +183,17 @@ export default function CrearOrdenServicio() {
         <Label>Personal a cargo</Label>
         <Input {...register("responsable")} />
 
-        <Label>Departamento</Label>
+        <Label>Departamento o Dispositivo</Label>
         <Select {...register("departamento")}>
           <option value="">Seleccione un Departamento</option>
           {departamentos.map((d) => (
             <option key={d.id} value={d.id}>
-              {d.numero} - Piso {d.piso}
+              {d.edificio} Piso {d.piso}° - dpto {d.numero}°
             </option>
           ))}
         </Select>
 
-        <Label>Ubicación de Artículos</Label>
+        <Label>Ubicación de Artículos en deposito</Label>
         <Select {...register("ubicacion")}>
           <option value="">Seleccione una ubicación</option>
           {ubicacion.map((u) => (
@@ -189,7 +203,7 @@ export default function CrearOrdenServicio() {
           ))}
         </Select>
 
-        <Label>Imagen</Label>
+        <Label>Imagen de Trabajo</Label>
         <Input type="file" accept="image/*" onChange={handleImagenChange} />
         {imagenBase64 && <PreviewImagen src={imagenBase64} alt="Imagen seleccionada" />}
 
@@ -424,7 +438,8 @@ export default function CrearOrdenServicio() {
           </Table>
         </Section>
 
-        <SubmitButton type="submit">Guardar</SubmitButton>
+      {mensaje && <MensajeExito>{mensaje}</MensajeExito>}
+      {error && <MensajeError>{error}</MensajeError>}        <SubmitButton type="submit">Guardar</SubmitButton>
       </Form>
 
       <BackLink href="/home">← Volver atrás</BackLink>
@@ -432,119 +447,176 @@ export default function CrearOrdenServicio() {
   );
 }
 
-// Estilos con styled-components
+// Styled Components
 const Container = styled.div`
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  flex-direction: column;
   max-width: 850px;
   margin: 30px auto;
-  padding: 0 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', sans-serif;
 `;
 
 const Title = styled.h1`
   font-size: 22px;
-  text-align: center;
-  margin-bottom: 20px;
-  font-weight: 700;
-`;
-
-const MensajeExito = styled.p`
-  color: green;
   font-weight: 600;
-  text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+  color: #2c3e50;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 6px;
 `;
 
 const MensajeError = styled.p`
-  color: red;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 10px;
+ color: #c0392b;
+ background: #fdecea; 
+ padding: 6px 10px; 
+ border-radius: 5px; 
+ font-size: 14px;
 `;
 
+const MensajeExito = styled.p`
+ color: #27ae60; 
+ background: #e9f7ef; 
+ padding: 6px 10px; 
+ border-radius: 5px; 
+ font-size: 14px; 
+`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 14px;
-`;
-
-const Label = styled.label`
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 3px;
-`;
-
-const Input = styled.input`
-  padding: 6px 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  gap: 4px;
+  max-width: 700px;
 `;
 
 const Section = styled.section`
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   border: 1px solid #ddd;
   padding: 12px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   background-color: #fafafa;
 `;
 
 const SectionHeader = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 `;
 
+const Label = styled.label`
+  font-size: 15px;
+  font-weight: 600;
+  color: #34495e;
+`;
+
+const Input = styled.input`
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+`;
+
+const InputSmall = styled.input`
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: 100%;
+  max-width: 100px;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+`;
+
+const Select = styled.select`
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+`;
+
 const Comandos = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 `;
 
 const ButtonSmall = styled.button`
-  padding: 5px 12px;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 6px 14px;
   font-size: 14px;
   font-weight: 600;
-  margin: 10px;
-  cursor: pointer;
-  border: none;
   border-radius: 6px;
-  background-color: #e67e22;
-  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #d35400;
+    background-color: #e67e22;
   }
 `;
 
 const SubmitButton = styled.button`
-  background-color: #2980b9;
-  border: none;
+  background-color: #3498db;
   color: white;
+  border: none;
   padding: 14px;
-  font-weight: bold;
+  font-weight: 700;
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
+  transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #1f6391;
+    background-color: #2980b9;
   }
 `;
 
 const BackLink = styled.a`
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 20px;
-  color: #555;
-  text-decoration: underline;
-  text-align: center;
-  font-size: 15px;
+  color: #7f8c8d;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
 
   &:hover {
-    color: #000;
+    text-decoration: underline;
+    color: #2c3e50;
   }
 `;
 
@@ -559,18 +631,18 @@ const PreviewImagen = styled.img`
 
 const Table = styled.table`
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto 20px auto;
+  max-width: 100%;
+  margin-top: 10px;
   border-collapse: collapse;
-  font-size: 16px;
-  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-family: 'Segoe UI', sans-serif;
 `;
 
 const Th = styled.th`
   text-align: left;
-  border-bottom: 2px solid #357edd;
+  border-bottom: 2px solid #3498db;
   padding: 8px 12px;
-  color: #357edd;
+  color: #3498db;
   font-weight: 600;
 `;
 
@@ -581,22 +653,6 @@ const Td = styled.td`
 
 const Tr = styled.tr`
   &:hover {
-    background-color: #f5faff;
+    background-color: #f0f8ff;
   }
-`;
-
-const Select = styled.select`
-  padding: 6px 10px;
-  font-size: 16px;
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-const InputSmall = styled.input`
-  width: 100%;
-  max-width: 100px;
-  padding: 6px 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
 `;

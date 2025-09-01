@@ -173,12 +173,12 @@ function initDatabase() {
     CREATE TABLE IF NOT EXISTS articulos_prestados(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     estado TEXT CHECK(estado IN('PRESTADO','DEVUELTO')) DEFAULT 'PRESTADO',
-    cantidad INTEGER,
-    cantidad_devuelta INTEGER,
+    cantidad INTEGER DEFAULT 0,
+    cantidad_devuelta INTEGER DEFAULT 0,
     articulo_id INTEGER,
     prestamo_id INTEGER,
-    FOREIGN KEY(prestamo_id) REFERENCES prestamo(id) ON DELETE CASCADE
-    FOREIGN KEY(articulo_id) REFERENCES articulo(id) ON DELETE CASCADE
+    FOREIGN KEY(prestamo_id) REFERENCES prestamo(id) ON DELETE CASCADE,
+    FOREIGN KEY(articulo_id) REFERENCES articulo(id) ON DELETE SET NULL
     )`).run();
 
   /************** SOBRANTES ****************/
@@ -232,6 +232,7 @@ function initDatabase() {
       fecha TEXT,
       codigo_ref TEXT,
       proveedor_id INTEGER,
+      estado TEXT CHECK (estado IN ('ACTIVO','CULMINADO')) DEFAULT 'ACTIVO',
       FOREIGN KEY (proveedor_id) REFERENCES proveedor(id) ON DELETE CASCADE
     )
   `).run();
@@ -248,53 +249,13 @@ function initDatabase() {
     )
   `).run();
 
-  /************** VEHICULOS ****************/
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS vehiculos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      marca TEXT,
-      patente TEXT,
-      codigo TEXT
-    )
-  `).run();
-
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS atributos_vehiculos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      atributo TEXT,
-      descripcion TEXT,
-      vehiculo_id INTEGER,
-      FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
-    )
-  `).run();
-
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS orden_reparacion (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      fecha TEXT,
-      descripcion TEXT,
-      vehiculo_id INTEGER,
-      FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
-    )
-  `).run();
-
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS repuestos_asignados (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cantidad INTEGER,
-      articulo_id INTEGER,
-      orden_reparacion_id INTEGER,
-      FOREIGN KEY (orden_reparacion_id) REFERENCES orden_reparacion(id) ON DELETE CASCADE,
-      FOREIGN KEY (articulo_id) REFERENCES articulo(id) ON DELETE CASCADE
-    )
-  `).run();
 
   //Tabla de movimientos generales: 
   db.prepare(`
     CREATE TABLE IF NOT EXISTS movimientos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     articulo_id INTEGER NOT NULL,
-    tipo_movimiento TEXT CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA')) NOT NULL,
+    tipo_movimiento TEXT CHECK (tipo_movimiento IN ('ENTRADA', 'UPDATE','SALIDA')) NOT NULL,
     cantidad INTEGER NOT NULL,
     fecha TEXT DEFAULT CURRENT_TIMESTAMP,
     fuente TEXT,         -- 'orden_compra', 'orden_servicio', 'Herramienta' etc.
@@ -302,7 +263,9 @@ function initDatabase() {
     observaciones TEXT
   );`).run();
 
- db.exec(`-- TRIGGER para INSERT en articulos_orden_compra (entrada stock)
+ db.exec(`
+
+  -- TRIGGER para INSERT en articulos_orden_compra (entrada stock)
 CREATE TRIGGER IF NOT EXISTS trigger_articulos_orden_compra_insert
 AFTER INSERT ON articulos_orden_compra
 FOR EACH ROW

@@ -9,9 +9,8 @@ const Container = styled.div`
   font-family: 'Inter', sans-serif;
 `;
 
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 600;
+const Title = styled.p`
+  font-size: 1.8rem;
   margin-bottom: 1.5rem;
 `;
 
@@ -34,62 +33,69 @@ const ErrorText = styled.p`
   font-size: 0.95rem;
 `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+const TableWrapper = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 0 6px rgba(0,0,0,0.04);
 `;
 
-const Thead = styled.thead`
-  background-color: #fafafa;
-`;
-
-const Tr = styled.tr`
-  border-top: 1px solid #eee;
-
-  &:first-child {
-    border-top: none;
-  }
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
 `;
 
 const Th = styled.th`
   text-align: left;
-  padding: 1rem;
+  padding: 0.5rem 0.7rem; /* Más compacto */
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.8rem; /* Más compacto */
   color: #777;
+  background-color: #fafafa;
 `;
 
 const Td = styled.td`
-  padding: 1rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 0.7rem; /* Más compacto */
+  font-size: 0.8rem; /* Más compacto */
   vertical-align: top;
 `;
 
+const Tr = styled.tr`
+  border-top: 1px solid #eee;
+  transition: background-color 0.2s ease;
+
+  &:first-child {
+    border-top: none;
+  }
+
+  &:hover {
+    background-color: #f9f9f9; /* Resaltado leve */
+  }
+`;
+
 const Imagen = styled.img`
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 6px;
   object-fit: cover;
   border: 1px solid #ddd;
 `;
 
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  margin-top: 2rem;
-  font-size: 0.95rem;
-  color: #007bff;
+
+const BackLink = styled.a`
+  display: block;
+  margin-top: 30px;
+  color: #1a936f;
+  text-decoration: none;
+  font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
+  text-align: center;
 
   &:hover {
-    color: #0056b3;
+    text-decoration: underline;
   }
 `;
+
 
 export default function StockInventario() {
   const [articulos, setArticulos] = useState([]);
@@ -155,48 +161,50 @@ export default function StockInventario() {
       {error && <ErrorText>{error}</ErrorText>}
 
       {!error && (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>Imagen</Th>
-              <Th>Nombre</Th>
-              <Th>Descripción</Th>
-              <Th>Ubicación</Th>
-              <Th>Cantidad</Th>
-              <Th>Pendiente</Th>
-            </Tr>
-          </Thead>
-          <tbody>
-            {filasTabla.length === 0 ? (
+        <TableWrapper>
+          <Table>
+            <thead>
               <Tr>
-                <Td colSpan="6" style={{ textAlign: "center", padding: "1rem", color: "#999" }}>
-                  No hay artículos que coincidan con la búsqueda.
-                </Td>
+                <Th>Imagen</Th>
+                <Th>Nombre</Th>
+                <Th>Descripción</Th>
+                <Th>Ubicación</Th>
+                <Th>Cantidad</Th>
+                <Th>Pendiente</Th>
               </Tr>
-            ) : (
-              filasTabla.map((fila) => (
-                <Tr key={fila.key}>
-                  <Td>
-                    <Imagen
-                      src={fila.imagen || "https://via.placeholder.com/100?text=Sin+imagen"}
-                      alt={`Imagen de ${fila.nombre}`}
-                    />
-                  </Td>
-                  <Td>{fila.nombre}</Td>
-                  <Td>{fila.descripcion || "Sin descripción"}</Td>
-                  <Td>{fila.ubicacion}</Td>
-                  <Td>{fila.cantidad}</Td>
-                  <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                    {fila.pendiente}
+            </thead>
+            <tbody>
+              {filasTabla.length === 0 ? (
+                <Tr>
+                  <Td colSpan="6" style={{ textAlign: "center", padding: "1rem", color: "#999" }}>
+                    No hay artículos que coincidan con la búsqueda.
                   </Td>
                 </Tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+              ) : (
+                filasTabla.map((fila) => (
+                  <Tr key={fila.key}>
+                    <Td>
+                      <Imagen
+                        src={fila.imagen || "https://via.placeholder.com/60?text=Sin+imagen"}
+                        alt={`Imagen de ${fila.nombre}`}
+                      />
+                    </Td>
+                    <Td>{fila.nombre}</Td>
+                    <Td>{fila.descripcion || "Sin descripción"}</Td>
+                    <Td>{fila.ubicacion}</Td>
+                    <Td>{fila.cantidad}</Td>
+                    <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
+                      {fila.pendiente}
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </TableWrapper>
       )}
 
-      <BackButton onClick={() => navigate("/home")}>← Volver al inicio</BackButton>
+      <BackLink onClick={() => navigate("/home")}>← Volver al inicio</BackLink>
     </Container>
   );
 }

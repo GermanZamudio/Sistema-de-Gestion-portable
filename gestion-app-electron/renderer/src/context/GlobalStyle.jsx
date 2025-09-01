@@ -20,7 +20,11 @@ const GlobalStyle = createGlobalStyle`
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
+@media (max-width: 900px) {
+  body {
+    margin: 15%;
+  }
+}
   a {
     color: #357edd; /* azul Bootstrap */
     text-decoration: none;

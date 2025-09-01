@@ -183,7 +183,6 @@ export default function BienesUso() {
                 <Th>Ubicación</Th>
                 <Th>Cantidad</Th>
                 <Th>Pendiente</Th>
-                <Th>Identificados</Th>
               </Tr>
             </Thead>
             <tbody>
@@ -202,10 +201,6 @@ export default function BienesUso() {
                     <Td>{fila.cantidad}</Td>
                     <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
                       {fila.pendiente}
-                    </Td>
-                    <Td>{fila.identificado ? ( 
-                    <button>Ver</button> )
-                    : null }
                     </Td>
                   </Tr>
                 ))

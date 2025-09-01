@@ -97,14 +97,14 @@ const Home = () => {
               </ScrollableTableBody>
             </Table>
           ) : (
-            <LoadingMessage>No hay órdenes activas.</LoadingMessage>
+            <LoadingMessage>No hay préstamos activos.</LoadingMessage>
           )}
         </>
       )}
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {!error && data.length === 0 && (
-        <LoadingMessage>Cargando préstamos o no hay registros.</LoadingMessage>
+        <LoadingMessage>Cargando órdenes o no hay registros.</LoadingMessage>
       )}
 
       {!error && data.length > 0 && (
@@ -152,6 +152,25 @@ const Container = styled.div`
   margin: 30px auto;
   padding: 0 24px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+
+  /* Imagen de fondo */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/fondo.jpg");
+    background-size: cover;
+    background-position: center;
+    opacity: 0.2; /* Ajusta la opacidad */
+    z-index: 0;
+  }
+
+  /* Contenido encima de la imagen */
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const Title = styled.h1`
@@ -227,7 +246,7 @@ const ErrorMessage = styled.p`
   font-size: 0.9rem;
 `;
 
-const LoadingMessage = styled.p`
+const LoadingMessage = styled.h1`
   text-align: center;
   color: #34495e;
   margin-bottom: 16px;

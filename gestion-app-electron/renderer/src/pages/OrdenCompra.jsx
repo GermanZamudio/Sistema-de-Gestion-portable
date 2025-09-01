@@ -180,14 +180,14 @@ const Container = styled.div`
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
-const Titulo = styled.h1`
+const Titulo = styled.p`
   font-size: 24px;
   text-align: center;
   margin-bottom: 20px;
   color: #2c3e50;
 `;
 
-const Subtitulo = styled.h2`
+const Subtitulo = styled.p`
   font-size: 18px;
   margin-top: 30px;
   margin-bottom: 10px;

@@ -11,15 +11,22 @@ ipcMain.handle('api:get', async (event, ruta) => {
     const res = await axios.get(`${baseURL}${ruta}`);
     return res.data;
   } catch (error) {
+    if (error.response && error.response.data) {
+      return { error: error.response.data.error || "Error en el servidor" };
+    }
     return { error: error.message };
   }
 });
+
 
 ipcMain.handle('api:post', async (event, { ruta, data }) => {
   try {
     const res = await axios.post(`${baseURL}${ruta}`, data);
     return res.data;
   } catch (error) {
+    if (error.response && error.response.data) {
+      return { error: error.response.data.error || "Error en el servidor" };
+    }
     return { error: error.message };
   }
 });
@@ -29,6 +36,9 @@ ipcMain.handle('api:delete', async (event, ruta) => {
     const res = await axios.delete(`${baseURL}${ruta}`);
     return res.data;
   } catch (error) {
+    if (error.response && error.response.data) {
+      return { error: error.response.data.error || "Error en el servidor" };
+    }
     return { error: error.message };
   }
 });

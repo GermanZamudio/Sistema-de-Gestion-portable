@@ -138,9 +138,8 @@ const Container = styled.main`
   padding: 0 20px;
 `;
 
-const PageTitle = styled.h1`
+const PageTitle = styled.p`
   font-size: 2rem;
-  color: #0969da;
   text-align: center;
   margin-bottom: 40px;
 `;
@@ -169,12 +168,21 @@ const Lista = styled.div`
   border: 1px solid #d0d7de;
   border-radius: 6px;
   padding: 16px;
+  ul {
+    list-style: none;  // <-- elimina el punto
+    padding-left: 0;
+    margin: 0;
+  }
+
+  li {
+    margin-bottom: 6px;
+  }
 `;
 
 const ListaTitulo = styled.div`
   font-size: 1rem;
   font-weight: 600;
-  color: #0969da;
+  color: #000000;
   display: flex;
   justify-content: space-between;
   align-items: center;

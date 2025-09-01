@@ -198,7 +198,7 @@ router.get('/form_orden_servicio', (req,res) => {
     if (identificados.length === 0) {
       console.warn("No hay articulos identificados disponibles");
     }
-
+    console.log(articulos)
     res.json({
       departamentos,
       ubicacion,

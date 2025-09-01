@@ -108,11 +108,17 @@ const ButtonLink = styled(Link)`
 `;
 
 const BackLink = styled(Link)`
-  display: inline-block;
-  margin-top: 2rem;
-  font-size: 0.95rem;
-  color: #555;
-  text-decoration: underline;
+  display: block;
+  margin-top: 30px;
+  color: #1a936f;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 // -------------------- COMPONENTE -------------------- //
@@ -137,96 +143,112 @@ export default function Departamento() {
     fetchData();
   }, [id]);
 
+  if (!departamento) return null;
+
+  const esVehiculo = departamento?.edificio_nombre?.toUpperCase() === "VEHICULO";
+
   return (
     <PageContainer>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {departamento && (
-        <>
-          <Title>
-            Departamento {departamento.numero} – ‘{departamento.nombre}’
-          </Title>
-          <SubInfo>
-            Estado: {departamento.estado} | Superficie: {departamento.superficie} m² |
-            Ubicación: {departamento.ubicacion} | Responsable: {departamento.responsable}
-          </SubInfo>
 
-          <Section>
-            <SectionTitle>Datos Centrales</SectionTitle>
-            <DataTable>
-              <tbody>
-                <DataRow><Th>Nombre del Departamento</Th><Td>{departamento.nombre}</Td></DataRow>
-                <DataRow><Th>Número</Th><Td>{departamento.numero}</Td></DataRow>
-                <DataRow><Th>Estado</Th><Td>{departamento.estado}</Td></DataRow>
-                <DataRow><Th>Superficie</Th><Td>{departamento.superficie} m²</Td></DataRow>
-                <DataRow><Th>Ubicación</Th><Td>{departamento.ubicacion}</Td></DataRow>
-                <DataRow><Th>Responsable</Th><Td>{departamento.responsable}</Td></DataRow>
-              </tbody>
-            </DataTable>
-          </Section>
+      <Title>
+        {esVehiculo ? "Vehículo" : "Departamento"} {departamento.piso} – ‘{departamento.numero}’
+      </Title>
 
-          <Section>
-            <SectionTitle>Historial de Trabajos</SectionTitle>
-            {ordenes.length > 0 ? (
-              <Table>
-                <THead>
-                  <tr>
-                    <TableCell>Fecha</TableCell>
-                    <TableCell>Descripción</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Materiales/Consumibles</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </tr>
-                </THead>
-                <TBody>
-                  {ordenes.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell>{o.fecha}</TableCell>
-                      <TableCell>{o.nombre}</TableCell>
-                      <TableCell><Tag status={o.estado}>{o.estado}</Tag></TableCell>
-                      <TableCell>{o.materiales || "-"}</TableCell>
-                      <TableCell><ButtonLink to={`/orden-servicio/${o.id}`}>Ver/Editar</ButtonLink></TableCell>
-                    </TableRow>
-                  ))}
-                </TBody>
-              </Table>
-            ) : (
-              <p>No hay órdenes de servicio.</p>
+      <SubInfo>
+        Estado: {departamento.estado} |
+        {!esVehiculo && <>Superficie: {departamento.superficie} m² |</>}
+        Ubicación: {departamento.ubicacion} |
+        Responsable: {departamento.responsable}
+      </SubInfo>
+
+      <Section>
+        <SectionTitle>Datos Centrales</SectionTitle>
+        <DataTable>
+          <tbody>
+            <DataRow>
+              <Th>Estado</Th>
+              <Td>{departamento.estado}</Td>
+            </DataRow>
+            {!esVehiculo && (
+              <DataRow>
+                <Th>Superficie</Th>
+                <Td>{departamento.superficie} m²</Td>
+              </DataRow>
             )}
-          </Section>
+            <DataRow>
+              <Th>Ubicación</Th>
+              <Td>{departamento.ubicacion}</Td>
+            </DataRow>
+            <DataRow>
+              <Th>Responsable</Th>
+              <Td>{departamento.responsable}</Td>
+            </DataRow>
+          </tbody>
+        </DataTable>
+      </Section>
 
-          <Section>
-            <SectionTitle>Bienes de Uso</SectionTitle>
-            {bienes.length > 0 ? (
-              <Table>
-                <THead>
-                  <tr>
-                    <TableCell>Nombre</TableCell>
-                    <TableCell>Marca</TableCell>
-                    <TableCell>Código</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </tr>
-                </THead>
-                <TBody>
-                  {bienes.map((b) => (
-                    <TableRow key={b.id_identificado}>
-                      <TableCell>{b.nombre_articulo}</TableCell>
-                      <TableCell>{b.marca || "-"}</TableCell>
-                      <TableCell>{b.codigo}</TableCell>
-                      <TableCell>{b.estado || "-"}</TableCell>
-                      <TableCell><ButtonLink to={`/bien/${b.id_identificado}`}>Ver Detalles/Reasignar</ButtonLink></TableCell>
-                    </TableRow>
-                  ))}
-                </TBody>
-              </Table>
-            ) : (
-              <p>No hay bienes asignados.</p>
-            )}
-          </Section>
+      <Section>
+        <SectionTitle>Historial de Trabajos</SectionTitle>
+        {ordenes.length > 0 ? (
+          <Table>
+            <THead>
+              <tr>
+                <TableCell>Fecha</TableCell>
+                <TableCell>Descripción</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Materiales/Consumibles</TableCell>
+                <TableCell>Acciones</TableCell>
+              </tr>
+            </THead>
+            <TBody>
+              {ordenes.map((o) => (
+                <TableRow key={o.id}>
+                  <TableCell>{o.fecha}</TableCell>
+                  <TableCell>{o.nombre}</TableCell>
+                  <TableCell><Tag status={o.estado}>{o.estado}</Tag></TableCell>
+                  <TableCell>{o.materiales || "-"}</TableCell>
+                  <TableCell><ButtonLink to={`/orden-servicio/${o.id}`}>Ver/Editar</ButtonLink></TableCell>
+                </TableRow>
+              ))}
+            </TBody>
+          </Table>
+        ) : (
+          <p>No hay órdenes de servicio.</p>
+        )}
+      </Section>
 
-          <BackLink to="/edificios">← Volver a Edificios</BackLink>
-        </>
-      )}
+      <Section>
+        <SectionTitle>Bienes de Uso</SectionTitle>
+        {bienes.length > 0 ? (
+          <Table>
+            <THead>
+              <tr>
+                <TableCell>Nombre</TableCell>
+                <TableCell>Marca</TableCell>
+                <TableCell>Código</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Acciones</TableCell>
+              </tr>
+            </THead>
+            <TBody>
+              {bienes.map((b) => (
+                <TableRow key={b.id_identificado}>
+                  <TableCell>{b.nombre_articulo}</TableCell>
+                  <TableCell>{b.marca || "-"}</TableCell>
+                  <TableCell>{b.codigo}</TableCell>
+                  <TableCell>{b.estado || "-"}</TableCell>
+                  <TableCell><ButtonLink to={`/bien/${b.id_identificado}`}>Ver Detalles/Reasignar</ButtonLink></TableCell>
+                </TableRow>
+              ))}
+            </TBody>
+          </Table>
+        ) : (
+          <p>No hay bienes asignados.</p>
+        )}
+      </Section>
+
+        {esVehiculo ? <BackLink to="/vehiculos">← Volver a Vehiculos</BackLink> : <BackLink to="/edificios">← Volver a Edificios</BackLink>} 
     </PageContainer>
   );
 }
