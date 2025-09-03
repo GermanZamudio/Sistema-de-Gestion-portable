@@ -238,7 +238,7 @@ export default function Departamento() {
                   <TableCell>{b.marca || "-"}</TableCell>
                   <TableCell>{b.codigo}</TableCell>
                   <TableCell>{b.estado || "-"}</TableCell>
-                  <TableCell><ButtonLink to={`/bien/${b.id_identificado}`}>Ver Detalles/Reasignar</ButtonLink></TableCell>
+                  <TableCell><ButtonLink to={`/bienes-identificados/${b.articulo_id}`}>Ver Detalles</ButtonLink></TableCell>
                 </TableRow>
               ))}
             </TBody>

@@ -11,35 +11,34 @@ const uploadConsumo = multer({ storage: multer.memoryStorage() });
 
 
 
-
 router.get('/existencias/:tipo', (req, res) => {
   try {
     const tipo = req.params.tipo.toUpperCase();
     const tiposValidos = ['STOCK', 'USO', 'CONSUMO', 'HERRAMIENTA'];
-    console.log(tipo)
+    console.log(tipo);
     if (!tiposValidos.includes(tipo)) {
       return res.status(400).json({ error: 'Tipo de bien no válido' });
     }
 
     const resultados = db.prepare(`
-    SELECT
-      e.id AS existencia_id,
-      e.cantidad,
-      e.pendiente_a_entregar AS pendiente,
-      u.nombre AS ubicacion,
-      a.id AS articulo_id,
-      a.nombre AS articulo_nombre,
-      a.descripcion,
-      a.imagen,
-      a.tipo_bien 
-    FROM articulo a
-    LEFT JOIN existencia e ON a.id = e.articulo_asociado_id
-    LEFT JOIN ubicacion u ON u.id = e.ubicacion_id
-    WHERE a.tipo_bien = ?
-    ORDER BY a.nombre
+      SELECT
+        e.id AS existencia_id,
+        e.cantidad,
+        e.pendiente_a_entregar AS pendiente,
+        u.nombre AS ubicacion,
+        a.id AS articulo_id,
+        a.nombre AS articulo_nombre,
+        a.descripcion,
+        a.imagen,
+        a.tipo_bien,
+        a.identificable AS identificable       -- ⬅️ NUEVO
+      FROM articulo a
+      LEFT JOIN existencia e ON a.id = e.articulo_asociado_id
+      LEFT JOIN ubicacion u ON u.id = e.ubicacion_id
+      WHERE a.tipo_bien = ?
+      ORDER BY a.nombre
     `).all(tipo);
 
-    console.log(resultados)
     const mapa = new Map();
 
     for (const fila of resultados) {
@@ -51,19 +50,29 @@ router.get('/existencias/:tipo', (req, res) => {
         existencia_id,
         cantidad,
         pendiente,
-        ubicacion
+        ubicacion,
+        identificable                          // ⬅️ NUEVO
       } = fila;
 
       const imagenBase64 = imagen ? `data:image/jpeg;base64,${Buffer.from(imagen).toString('base64')}` : null;
 
       if (!mapa.has(articulo_id)) {
-        mapa.set(articulo_id, {
+        const base = {
           id: articulo_id,
           nombre: articulo_nombre,
           descripcion,
           imagen: imagenBase64,
           existencias: []
-        });
+        };
+
+        // ⬅️ Solo para tipo USO agregamos el flag identificable (como booleano real)
+        if (tipo === 'USO') {
+          base.identificable = Boolean(
+            identificable === true || identificable === 1 || identificable === '1'
+          );
+        }
+
+        mapa.set(articulo_id, base);
       }
 
       mapa.get(articulo_id).existencias.push({
@@ -80,7 +89,6 @@ router.get('/existencias/:tipo', (req, res) => {
     res.status(500).json({ error: 'Error al obtener existencias' });
   }
 });
-
 /******Orden de servicio*******/
 
 router.post('/licitacion/uso', uploadUso.array('articulos[].imagen'), (req, res) => {
@@ -769,5 +777,230 @@ router.post('/boton_pendiente_prestamo', (req, res) => {
   }
 });
 
+router.get('/identificados/:articuloId', (req, res) => {
+  try {
+    const articuloId = parseInt(req.params.articuloId, 10);
+    if (!Number.isInteger(articuloId) || articuloId <= 0) {
+      return res.status(400).json({ error: 'articuloId inválido' });
+    }
+
+    const estado = (req.query.estado || '').toUpperCase().trim();
+    const ESTADOS = new Set(['ALTA', 'OBSERVACION', 'BAJA']);
+    const filtrarPorEstado = ESTADOS.has(estado);
+
+    // 1) Identificados + nombre del artículo
+    const sqlIdent = `
+      SELECT 
+        ai.id       AS ident_id,
+        ai.codigo   AS codigo,
+        ai.estado   AS estado_ident,
+        ai.causa    AS causa,
+        a.nombre    AS articulo_nombre
+      FROM articulo_identificado ai
+      JOIN articulo a ON a.id = ai.id_articulo
+      WHERE ai.id_articulo = ?
+      ${filtrarPorEstado ? 'AND ai.estado = ?' : ''}
+      ORDER BY ai.codigo
+    `;
+    const identificados = filtrarPorEstado
+      ? db.prepare(sqlIdent).all(articuloId, estado)
+      : db.prepare(sqlIdent).all(articuloId);
+
+    if (identificados.length === 0) {
+      return res.json([]);
+    }
+
+    const identIds = identificados.map(i => i.ident_id);
+
+    // 2) Órdenes por identificado con edificio incluido
+    const ordenes = db.prepare(`
+      SELECT
+        ai_asig.articulo_identificado_id AS ident_id,
+        os.id                             AS orden_id,
+        os.nombre                         AS orden_nombre,
+        os.fecha                          AS fecha,
+        os.estado                         AS estado,
+        os.departamento_id                AS departamento_id,
+        d.piso                            AS depto_piso,
+        d.numero                          AS depto_numero,
+        d.edificio_id                     AS edificio_id,
+        e.nombre                          AS edificio_nombre,
+        os.ubicacion_id                   AS ubicacion_id,
+        u.nombre                          AS ubicacion_nombre
+      FROM articulos_identificados_asignados ai_asig
+      JOIN orden_servicio os ON os.id = ai_asig.orden_servicio_id
+      LEFT JOIN departamento d ON d.id = os.departamento_id
+      LEFT JOIN edificio    e ON e.id = d.edificio_id    -- unión para obtener el edificio
+      LEFT JOIN ubicacion   u ON u.id = os.ubicacion_id
+      WHERE ai_asig.articulo_identificado_id IN (${identIds.map(() => '?').join(',')})
+      ORDER BY 
+        CASE WHEN os.fecha IS NULL THEN 1 ELSE 0 END,
+        datetime(os.fecha) DESC, os.id DESC
+    `).all(...identIds);
+
+    // 3) Agrupar la respuesta
+    const resultByIdent = new Map();
+    identificados.forEach(i => {
+      resultByIdent.set(i.ident_id, {
+        ident_id: i.ident_id,
+        codigo: i.codigo,
+        articulo_nombre: i.articulo_nombre,
+        estado_ident: i.estado_ident,
+        causa:i.causa,
+        ubicacion_actual: { id: null, nombre: null },
+        ordenes: []
+      });
+    });
+
+    // Componer destino: Edificio · Piso · Dto o Ubicación
+    function destinoLegible(row) {
+      if (row.departamento_id) {
+        const partes = [];
+        if (row.edificio_nombre) partes.push(`Edificio ${row.edificio_nombre}`);
+        if (row.depto_piso)      partes.push(`Piso ${row.depto_piso}`);
+        if (row.depto_numero)    partes.push(`Dto ${row.depto_numero}`);
+        return partes.join(' · ') || 'Departamento';
+      }
+      if (row.ubicacion_id) return row.ubicacion_nombre;
+      return null;
+    }
+
+    ordenes.forEach(o => {
+      const bucket = resultByIdent.get(o.ident_id);
+      if (!bucket) return;
+      bucket.ordenes.push({
+        orden_id: o.orden_id,
+        codigo: o.orden_nombre ?? `#${o.orden_id}`,
+        fecha: o.fecha ?? null,
+        destino: destinoLegible(o),
+        estado: o.estado ?? null
+      });
+    });
+
+    // 4) Ubicación actual = destino de la orden más reciente
+    resultByIdent.forEach(obj => {
+      if (obj.ordenes.length > 0) {
+        const ult = obj.ordenes[0];
+        obj.ubicacion_actual = { id: null, nombre: ult.destino ?? null };
+      }
+    });
+    console.log(resultByIdent)
+    return res.json(Array.from(resultByIdent.values()));
+  } catch (err) {
+    console.error('Error en GET /identificados/:articuloId', err);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+
+// Función auxiliar para obtener fecha actual en formato YYYY-MM-DD
+function getTodayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * PUT /api/inventario/identificados/:identId/estado
+ * Body:
+ *  { estado: 'OBSERVACION', causa: 'motivo' }    // ALTA ➜ OBSERVACIÓN (causa obligatoria)
+ *  { estado: 'BAJA', causa?: 'motivo' }          // OBSERVACIÓN ➜ BAJA (causa opcionalmente editable)
+ */
+router.post('/identificados/:identId/estado', (req, res) => {
+  try {
+    const identId = parseInt(req.params.identId, 10);
+        console.log("Llegue a entrar")
+
+    if (!Number.isInteger(identId) || identId <= 0) {
+      return res.status(400).json({ error: 'identId inválido' });
+    }
+    let { estado, causa } = req.body || {};
+    if (!estado || typeof estado !== 'string') {
+      return res.status(400).json({ error: 'Debe enviar el campo "estado"' });
+    }
+    estado = estado.toUpperCase().trim();
+
+    const ESTADOS_PERMITIDOS = new Set(['ALTA', 'OBSERVACION', 'BAJA']);
+    if (!ESTADOS_PERMITIDOS.has(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+
+    // Consulta el registro actual para conocer su estado y causa existente
+    const identificado = db.prepare(`
+      SELECT ai.id, ai.estado AS estado_actual, ai.causa AS causa_actual
+      FROM articulo_identificado ai
+      WHERE ai.id = ?
+    `).get(identId);
+
+    if (!identificado) {
+      return res.status(404).json({ error: 'articulo_identificado no encontrado' });
+    }
+
+    // Lógica de transiciones
+    const estadoActual = identificado.estado_actual;
+
+    if (estado === 'OBSERVACION') {
+      console.log("Entre en observacion")
+      // Solo permitido desde ALTA y la causa es obligatoria
+      if (estadoActual !== 'ALTA') {
+        return res.status(409).json({ error: 'Solo se puede pasar a OBSERVACION desde ALTA' });
+      }
+      const causaObs = (causa ?? '').trim();
+      if (!causaObs) {
+        return res.status(400).json({ error: 'La causa es obligatoria para OBSERVACION' });
+      }
+
+      db.prepare(`
+        UPDATE articulo_identificado
+        SET estado = 'OBSERVACION',
+            causa = ?,
+            fecha_baja = NULL
+        WHERE id = ?
+      `).run(causaObs, identId);
+
+    } else if (estado === 'BAJA') {
+      
+      console.log("Entre en baja")
+      // Solo permitido desde OBSERVACION
+      if (estadoActual !== 'OBSERVACION') {
+        return res.status(409).json({ error: 'Solo se puede pasar a BAJA desde OBSERVACION' });
+      }
+
+      // Determinar la causa final: nueva causa o la existente
+      const causaBody = (causa ?? '').trim();
+      const causaFinal = causaBody || (identificado.causa_actual ?? '').trim();
+      if (!causaFinal) {
+        return res.status(400).json({ error: 'La causa es obligatoria para BAJA' });
+      }
+
+      db.prepare(`
+        UPDATE articulo_identificado
+        SET estado = 'BAJA',
+            causa = ?,
+            fecha_baja = ?
+        WHERE id = ?
+      `).run(causaFinal, getTodayISO(), identId);
+
+    } else {
+      // Estado = ALTA no es manejado aquí (no tiene sentido volver a ALTA desde OBSERVACION o BAJA)
+      return res.status(409).json({ error: 'No se admite el cambio al estado ALTA en este endpoint' });
+    }
+
+    // Devolver el registro actualizado (podría incluir fecha_baja si la usas en la UI)
+    const updated = db.prepare(`
+      SELECT id AS ident_id, codigo, estado AS estado_ident, causa, fecha_baja
+      FROM articulo_identificado
+      WHERE id = ?
+    `).get(identId);
+
+    return res.json(updated);
+
+  } catch (err) {
+    console.error('Error en PUT /identificados/:identId/estado', err);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+});
 
 module.exports = router;

@@ -85,8 +85,10 @@ router.get('/departamento/:id',(req,res)=>{
   SELECT 
     ai.id AS id_identificado,
     ai.codigo,
+    ai.estado,
     a.nombre AS nombre_articulo,
     a.descripcion,
+    a.id AS articulo_id,
     os.nombre AS nombre_orden,
     os.fecha
   FROM articulos_identificados_asignados aias

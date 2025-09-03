@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
+// Estilos
 const Container = styled.div`
   max-width: 1100px;
   margin: 40px auto;
   padding: 0 24px;
   font-family: 'Inter', sans-serif;
 `;
+
 const CreateButton = styled.button`
   background-color: #28a745;
   color: white;
@@ -21,6 +23,7 @@ const CreateButton = styled.button`
     background-color: #218838;
   }
 `;
+
 const Title = styled.p`
   font-size: 1.8rem;
   margin-bottom: 1.2rem;
@@ -44,12 +47,14 @@ const ErrorText = styled.p`
   color: red;
   font-size: 0.85rem;
 `;
+
 const TableWrapper = styled.div`
   max-height: 400px;
   overflow-y: auto;
   border-radius: 12px;
   box-shadow: 0 0 6px rgba(0,0,0,0.04);
 `;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -68,21 +73,21 @@ const Tr = styled.tr`
   }
 
   &:hover {
-    background-color: #f9f9f9; /* Resaltado leve */
+    background-color: #f9f9f9;
   }
 `;
 
 const Th = styled.th`
   text-align: left;
-  padding: 0.5rem;       /* Más chico */
+  padding: 0.5rem;
   font-weight: 500;
-  font-size: 0.8rem;     /* Más chico */
+  font-size: 0.8rem;
   color: #777;
 `;
 
 const Td = styled.td`
-  padding: 0.5rem;       /* Más chico */
-  font-size: 0.8rem;     /* Más chico */
+  padding: 0.5rem;
+  font-size: 0.8rem;
   vertical-align: top;
 `;
 
@@ -103,6 +108,22 @@ const BackLink = styled.a`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+// Botón personalizado para "Ver"
+const ViewButton = styled.button`
+  background-color: #007bff;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #0069d9;
   }
 `;
 
@@ -137,22 +158,24 @@ export default function BienesUso() {
     return articulos.filter((art) => {
       const nombreMatch = art.nombre?.toLowerCase().includes(filtro);
       const descMatch = art.descripcion?.toLowerCase().includes(filtro);
-      const ubicacionMatch = art.existencias.some((ex) =>
+      const ubicacionMatch = art.existencias?.some((ex) =>
         ex.ubicacion?.toLowerCase().includes(filtro)
       );
       return nombreMatch || descMatch || ubicacionMatch;
     });
   }, [articulos, filtro]);
 
+  // Bajamos el flag identificable a cada fila de existencia
   const filasTabla = articulosFiltrados.flatMap((articulo) =>
-    articulo.existencias.map((item, i) => ({
+    (articulo.existencias || []).map((item, i) => ({
       key: `${articulo.id}-${item.existencia_id || i}`,
-      imagen: articulo.imagen,
+      articuloId: articulo.id,
       nombre: articulo.nombre,
       descripcion: articulo.descripcion,
       ubicacion: item.ubicacion,
       cantidad: item.cantidad,
       pendiente: item.pendiente,
+      identificable: !!articulo.identificable
     }))
   );
 
@@ -198,14 +221,23 @@ export default function BienesUso() {
                   <Tr key={fila.key}>
                     <Td>{fila.nombre}</Td>
                     <Td>{fila.descripcion || "Sin descripción"}</Td>
-                    <Td>{fila.ubicacion}</Td>
-                    <Td>{fila.cantidad}</Td>
+                    <Td>{fila.ubicacion || "—"}</Td>
+                    <Td>{fila.cantidad ?? 0}</Td>
                     <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                      {fila.pendiente}
+                      {fila.pendiente ?? 0}
                     </Td>
-                    <Td>{fila.identificado ? ( 
-                    <button>Ver</button> )
-                    : null }
+                    <Td>
+                      {fila.identificable ? (
+                        // botón estilizado y navegación a /Bienes_identificados
+                        <ViewButton
+                          onClick={() => navigate(`/bienes-identificados/${fila.articuloId}`)}
+                          title="Ver elementos identificados"
+                        >
+                          Ver
+                        </ViewButton>
+                      ) : (
+                        "No"
+                      )}
                     </Td>
                   </Tr>
                 ))

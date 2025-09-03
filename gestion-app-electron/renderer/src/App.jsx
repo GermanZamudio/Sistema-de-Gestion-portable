@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home';
 import Stock from './pages/Stock';
 import BienesUso from './pages/BienesUso';
+import BienesIdentificados from './pages/BienesIdentificados';
 import BienesConsumo from './pages/BienesConsumo';
 import CrearLicitacionConsumo from './pages/CrearLicitacionConsumo';
 import CrearLicitacionUso from './pages/CrearLicitacionUso';
@@ -53,6 +54,8 @@ function App() {
 
           <Route path="/stock" element={<Stock />} />
           <Route path="/bienes-uso" element={<BienesUso />} />
+          <Route path="/bienes-identificados/:id" element={<BienesIdentificados />} />
+
           <Route path="/bienes-consumo" element={<BienesConsumo />} />
 
           <Route path="/herramientas" element={<Herramientas />} />
