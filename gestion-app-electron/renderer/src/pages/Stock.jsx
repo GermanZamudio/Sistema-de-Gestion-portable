@@ -1,6 +1,8 @@
+// src/pages/StockInventario.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { exportTableToPDF } from "../utils/exportPdf";
 
 const Container = styled.div`
   max-width: 1100px;
@@ -22,10 +24,7 @@ const SearchInput = styled.input`
   border: 1px solid #ccc;
   border-radius: 8px;
   margin-bottom: 24px;
-
-  &::placeholder {
-    color: #aaa;
-  }
+  &::placeholder { color: #aaa; }
 `;
 
 const ErrorText = styled.p`
@@ -47,30 +46,24 @@ const Table = styled.table`
 
 const Th = styled.th`
   text-align: left;
-  padding: 0.5rem 0.7rem; /* Más compacto */
+  padding: 0.5rem 0.7rem;
   font-weight: 500;
-  font-size: 0.8rem; /* Más compacto */
+  font-size: 0.8rem;
   color: #777;
   background-color: #fafafa;
 `;
 
 const Td = styled.td`
-  padding: 0.5rem 0.7rem; /* Más compacto */
-  font-size: 0.8rem; /* Más compacto */
+  padding: 0.5rem 0.7rem;
+  font-size: 0.8rem;
   vertical-align: top;
 `;
 
 const Tr = styled.tr`
   border-top: 1px solid #eee;
   transition: background-color 0.2s ease;
-
-  &:first-child {
-    border-top: none;
-  }
-
-  &:hover {
-    background-color: #f9f9f9; /* Resaltado leve */
-  }
+  &:first-child { border-top: none; }
+  &:hover { background-color: #f9f9f9; }
 `;
 
 const Imagen = styled.img`
@@ -81,7 +74,6 @@ const Imagen = styled.img`
   border: 1px solid #ddd;
 `;
 
-
 const BackLink = styled.a`
   display: block;
   margin-top: 30px;
@@ -90,12 +82,24 @@ const BackLink = styled.a`
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  &:hover { text-decoration: underline; }
 `;
-
+const ContainerHeader = styled.div`
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+`;
+const PrimaryButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+  &:hover { background-color: #218838; }
+`;
 
 export default function StockInventario() {
   const [articulos, setArticulos] = useState([]);
@@ -103,18 +107,29 @@ export default function StockInventario() {
   const [busqueda, setBusqueda] = useState("");
   const navigate = useNavigate();
 
+  // Columnas para exportar a PDF (sin imágenes; es lo más estable)
+  const pdfColumns = useMemo(() => ([
+    { header: "Nombre",      field: "nombre",  align: "center"  },
+    { header: "Ubicación",   field: "ubicacion",  align: "center"  },
+    { header: "Cantidad",    field: "cantidad",  align: "center" },
+    { header: "Pendiente",   field: "pendiente", align: "center" },
+  ]), []);
+
+  // Distribución de ancho total A4 (suma ≈ 1.0)
+  const widthPercents = useMemo(() => [0.25, 0.25, 0.25, 0.25], []);
+
   useEffect(() => {
     async function fetchArticulos() {
       try {
         const response = await window.api.get("/api/inventario/existencias/STOCK");
-        if (response.error) {
+        if (response?.error) {
           setError(response.error);
           setArticulos([]);
         } else {
-          setArticulos(response);
+          setArticulos(Array.isArray(response) ? response : []);
           setError("");
         }
-      } catch (err) {
+      } catch {
         setError("Error al cargar artículos");
         setArticulos([]);
       }
@@ -125,38 +140,69 @@ export default function StockInventario() {
   const filtro = busqueda.toLowerCase();
 
   const articulosFiltrados = useMemo(() => {
-    return articulos.filter((art) => {
+    return (articulos || []).filter((art) => {
       const nombreMatch = art.nombre?.toLowerCase().includes(filtro);
-      const descMatch = art.descripcion?.toLowerCase().includes(filtro);
-      const ubicacionMatch = art.existencias.some((ex) =>
-        ex.ubicacion?.toLowerCase().includes(filtro)
+      const descMatch   = art.descripcion?.toLowerCase().includes(filtro);
+      const ubicacionMatch = (art.existencias || []).some(
+        (ex) => ex.ubicacion?.toLowerCase().includes(filtro)
       );
       return nombreMatch || descMatch || ubicacionMatch;
     });
   }, [articulos, filtro]);
 
-  const filasTabla = articulosFiltrados.flatMap((articulo) =>
-    articulo.existencias.map((item, i) => ({
-      key: `${articulo.id}-${item.existencia_id || i}`,
-      imagen: articulo.imagen,
-      nombre: articulo.nombre,
-      descripcion: articulo.descripcion,
-      ubicacion: item.ubicacion,
-      cantidad: item.cantidad,
-      pendiente: item.pendiente,
-    }))
-  );
+  const filasTabla = useMemo(() => {
+    return articulosFiltrados.flatMap((articulo) =>
+      (articulo.existencias || []).map((item, i) => ({
+        key: `${articulo.id}-${item.existencia_id || i}`,
+        imagen: articulo.imagen,
+        nombre: articulo.nombre,
+        ubicacion: item.ubicacion,
+        cantidad: item.cantidad,
+        pendiente: item.pendiente,
+      }))
+    );
+  }, [articulosFiltrados]);
+
+  // Exportación a PDF (ajustado a A4)
+  const onExportarPDF = () => {
+    if (!filasTabla.length) {
+      alert("No hay datos para exportar");
+      return;
+    }
+    const rows = filasTabla.map((f) => ({
+      nombre: f.nombre,
+      ubicacion: f.ubicacion,
+      cantidad: f.cantidad,
+      pendiente: f.pendiente,
+    }));
+
+    exportTableToPDF({
+      title: "Inventario – Stock",
+      columns: pdfColumns,
+      rows,
+      fileName: "stock_inventario.pdf",
+      // Esta línea centra todos los encabezados
+      headStyles: { halign: 'center' },
+      widthPercents,   // usa 100% del ancho útil A4
+      landscape: false, // pon en true si quieres horizontal
+      fontSize: 9,
+    });
+  };
 
   return (
     <Container>
-      <Title>Inventario</Title>
+      <Title>Inventario (Stock)</Title>
 
-      <SearchInput
-        type="text"
-        placeholder="Buscar por nombre, descripción o ubicación..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-      />
+      <ContainerHeader>
+
+        <PrimaryButton onClick={onExportarPDF}>Exportar PDF</PrimaryButton>
+        <SearchInput
+          type="text"
+          placeholder="Buscar por nombre, descripción o ubicación..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+      </ContainerHeader>
 
       {error && <ErrorText>{error}</ErrorText>}
 
@@ -191,10 +237,10 @@ export default function StockInventario() {
                     </Td>
                     <Td>{fila.nombre}</Td>
                     <Td>{fila.descripcion || "Sin descripción"}</Td>
-                    <Td>{fila.ubicacion}</Td>
-                    <Td>{fila.cantidad}</Td>
+                    <Td>{fila.ubicacion || "—"}</Td>
+                    <Td>{fila.cantidad ?? 0}</Td>
                     <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                      {fila.pendiente}
+                      {fila.pendiente ?? 0}
                     </Td>
                   </Tr>
                 ))

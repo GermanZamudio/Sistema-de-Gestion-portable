@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
+import { exportOrdenCompraToPDF } from "../utils/exportOrdenCompraPdf";
+
 
 export default function OrdenCompraDetalle() {
   const { id } = useParams();
@@ -9,6 +11,14 @@ export default function OrdenCompraDetalle() {
   const [mensaje, setMensaje] = useState("");
   const [cantidadParcial, setCantidadParcial] = useState({});
   const [erroresPorArticulo, setErroresPorArticulo] = useState({});
+  const onExportarPDF = () => {
+    if (!orden) return;
+    exportOrdenCompraToPDF({
+      orden,                      // pasa el objeto que ya tienes en estado
+      fileName: `orden_compra_${orden.id}.pdf`,
+      // logoDataUrl: 'data:image/png;base64,...' // opcional si luego querés sumar logo
+    });
+  };
 
   useEffect(() => {
     async function fetchOrden() {
@@ -97,6 +107,9 @@ export default function OrdenCompraDetalle() {
       {mensaje && <MensajeExito>{mensaje}</MensajeExito>}
 
       <Titulo>Orden de Compra #{orden.id}</Titulo>
+      <ButtonAzul onClick={onExportarPDF} style={{ marginBottom: 10 }}>
+        Exportar PDF
+      </ButtonAzul>
       <Parrafo><strong>Codigo de referencia:</strong> {orden.codigo_ref || "-"}</Parrafo>
       <Parrafo><strong>Fecha:</strong> {orden.fecha || "-"}</Parrafo>
       <Parrafo><strong>Proveedor:</strong> {orden.proveedor?.razon_social || "-"}</Parrafo>

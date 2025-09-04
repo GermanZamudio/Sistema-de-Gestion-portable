@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { exportTableToPDF } from "../utils/exportPdf";
 
 // Estilos
 const Container = styled.div`
@@ -19,9 +20,7 @@ const CreateButton = styled.button`
   border-radius: 8px;
   cursor: pointer;
 
-  &:hover {
-    background-color: #218838;
-  }
+  &:hover { background-color: #218838; }
 `;
 
 const Title = styled.p`
@@ -38,9 +37,7 @@ const SearchInput = styled.input`
   border-radius: 8px;
   margin-bottom: 20px;
 
-  &::placeholder {
-    color: #aaa;
-  }
+  &::placeholder { color: #aaa; }
 `;
 
 const ErrorText = styled.p`
@@ -67,14 +64,8 @@ const Thead = styled.thead`
 
 const Tr = styled.tr`
   border-top: 1px solid #eee;
-
-  &:first-child {
-    border-top: none;
-  }
-
-  &:hover {
-    background-color: #f9f9f9;
-  }
+  &:first-child { border-top: none; }
+  &:hover { background-color: #f9f9f9; }
 `;
 
 const Th = styled.th`
@@ -105,13 +96,10 @@ const BackLink = styled.a`
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  &:hover { text-decoration: underline; }
 `;
 
-// Botón personalizado para "Ver"
+// Botón "Ver"
 const ViewButton = styled.button`
   background-color: #007bff;
   color: white;
@@ -122,9 +110,7 @@ const ViewButton = styled.button`
   cursor: pointer;
   transition: background-color 0.2s ease;
 
-  &:hover {
-    background-color: #0069d9;
-  }
+  &:hover { background-color: #0069d9; }
 `;
 
 export default function BienesUso() {
@@ -132,6 +118,9 @@ export default function BienesUso() {
   const [error, setError] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const navigate = useNavigate();
+
+  // columnas para el PDF
+
 
   useEffect(() => {
     async function fetchArticulos() {
@@ -155,37 +144,68 @@ export default function BienesUso() {
   const filtro = busqueda.toLowerCase();
 
   const articulosFiltrados = useMemo(() => {
-    return articulos.filter((art) => {
+    return (articulos || []).filter((art) => {
       const nombreMatch = art.nombre?.toLowerCase().includes(filtro);
       const descMatch = art.descripcion?.toLowerCase().includes(filtro);
-      const ubicacionMatch = art.existencias?.some((ex) =>
+      const ubicacionMatch = (art.existencias || []).some((ex) =>
         ex.ubicacion?.toLowerCase().includes(filtro)
       );
       return nombreMatch || descMatch || ubicacionMatch;
     });
   }, [articulos, filtro]);
 
-  // Bajamos el flag identificable a cada fila de existencia
-  const filasTabla = articulosFiltrados.flatMap((articulo) =>
-    (articulo.existencias || []).map((item, i) => ({
-      key: `${articulo.id}-${item.existencia_id || i}`,
-      articuloId: articulo.id,
-      nombre: articulo.nombre,
-      descripcion: articulo.descripcion,
-      ubicacion: item.ubicacion,
-      cantidad: item.cantidad,
-      pendiente: item.pendiente,
-      identificable: !!articulo.identificable
-    }))
-  );
+  // filas renderizadas en la tabla
+  const filasTabla = useMemo(() => {
+    return articulosFiltrados.flatMap((articulo) =>
+      (articulo.existencias || []).map((item, i) => ({
+        key: `${articulo.id}-${item.existencia_id || i}`,
+        articuloId: articulo.id,
+        nombre: articulo.nombre,
+        ubicacion: item.ubicacion,
+        cantidad: item.cantidad,
+        identificable: !!articulo.identificable, // asegúrate de que venga del backend
+      }))
+    );
+  }, [articulosFiltrados]);
+
+  // Exportar PDF (construye rows en el momento para evitar el "before initialization")
+const columns = [
+  { header: 'Nombre',      field: 'nombre', align: 'center' },
+  { header: 'Ubicación',   field: 'ubicacion', align: 'center' },
+  { header: 'Cantidad',   field: 'cantidad', align: 'center' },
+];
+
+// Reparte 25 % al nombre, 35 % a la descripción, 20 % a ubicación, etc.
+// Ajusta los valores según tus datos.
+const widthPercents = [0.25, 0.35, 0.20, 0.10, 0.10];
+
+const onExportarPDF = () => {
+  const rows = filasTabla.map(f => ({
+    nombre: f.nombre,
+    ubicacion: f.ubicacion,
+    cantidad: f.cantidad,
+  }));
+  exportTableToPDF({
+    title: 'Inventario – Bienes de Uso',
+    columns,
+    rows,
+    fileName: 'bienes_uso.pdf',
+    widthPercents,
+    landscape: false,     // cambia a true si prefieres horizontal
+    fontSize: 9,
+  });
+};
+
 
   return (
     <Container>
       <Title>Bienes de Uso</Title>
+
       <ContainerHeader>
         <CreateButton onClick={() => navigate("/crear-licitacion-uso")}>
           Crear Licitación
         </CreateButton>
+
         <SearchInput
           type="text"
           placeholder="Buscar por nombre, descripción o ubicación..."
@@ -205,7 +225,6 @@ export default function BienesUso() {
                 <Th>Descripción</Th>
                 <Th>Ubicación</Th>
                 <Th>Cantidad</Th>
-                <Th>Pendiente</Th>
                 <Th>Identificados</Th>
               </Tr>
             </Thead>
@@ -223,12 +242,8 @@ export default function BienesUso() {
                     <Td>{fila.descripcion || "Sin descripción"}</Td>
                     <Td>{fila.ubicacion || "—"}</Td>
                     <Td>{fila.cantidad ?? 0}</Td>
-                    <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                      {fila.pendiente ?? 0}
-                    </Td>
                     <Td>
                       {fila.identificable ? (
-                        // botón estilizado y navegación a /Bienes_identificados
                         <ViewButton
                           onClick={() => navigate(`/bienes-identificados/${fila.articuloId}`)}
                           title="Ver elementos identificados"
@@ -246,6 +261,10 @@ export default function BienesUso() {
           </Table>
         </TableWrapper>
       )}
+
+      <div style={{ marginTop: 12 }}>
+        <CreateButton onClick={onExportarPDF}>Exportar PDF</CreateButton>
+      </div>
 
       <BackLink onClick={() => navigate("/home")}>← Volver al inicio</BackLink>
     </Container>

@@ -1,6 +1,8 @@
+// src/pages/BienesConsumo.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { exportTableToPDF } from "../utils/exportPdf";
 
 const Container = styled.div`
   max-width: 1100px;
@@ -17,10 +19,12 @@ const CreateButton = styled.button`
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  &:hover { background-color: #218838; }
+`;
 
-  &:hover {
-    background-color: #218838;
-  }
+const PrimaryButton = styled(CreateButton)`
+  background-color: #007bff;
+  &:hover { background-color: #0069d9; }
 `;
 
 const Title = styled.h1`
@@ -37,10 +41,7 @@ const SearchInput = styled.input`
   border: 1px solid #ccc;
   border-radius: 6px;
   margin-bottom: 20px;
-
-  &::placeholder {
-    color: #aaa;
-  }
+  &::placeholder { color: #aaa; }
 `;
 
 const ErrorText = styled.p`
@@ -79,20 +80,22 @@ const Td = styled.td`
 const Tr = styled.tr`
   border-top: 1px solid #eee;
   transition: background-color 0.2s ease;
-
-  &:first-child {
-    border-top: none;
-  }
-
-  &:hover {
-    background-color: #f9f9f9;
-  }
+  &:first-child { border-top: none; }
+  &:hover { background-color: #f9f9f9; }
 `;
 
 const ContainerHeader = styled.div`
   display: flex;
   align-items: start;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const ActionsRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
 `;
 
 const BackContainer = styled.div`
@@ -109,7 +112,6 @@ const BackLink = styled.a`
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-
   &:hover {
     text-decoration: underline;
     background-color: #f1f1f1;
@@ -122,18 +124,29 @@ export default function BienesConsumo() {
   const [busqueda, setBusqueda] = useState("");
   const navigate = useNavigate();
 
+  // Definición de columnas para el PDF (solo datos relevantes)
+  const pdfColumns = useMemo(() => ([
+    { header: "Nombre",      field: "nombre",  align: "center"  },
+    { header: "Ubicación",   field: "ubicacion",  align: "center"  },
+    { header: "Cantidad",    field: "cantidad",  align: "center" },
+  ]), []);
+
+  // Porcentajes de ancho (suma ~ 1) para ajustar a A4
+  // Podés retocar estos valores si tu descripción es muy larga.
+  const widthPercents = useMemo(() => [0.25, 0.35, 0.20, 0.10, 0.10], []);
+
   useEffect(() => {
     async function fetchArticulos() {
       try {
         const response = await window.api.get("/api/inventario/existencias/CONSUMO");
-        if (response.error) {
+        if (response?.error) {
           setError(response.error);
           setArticulos([]);
         } else {
-          setArticulos(response);
+          setArticulos(Array.isArray(response) ? response : []);
           setError("");
         }
-      } catch (err) {
+      } catch {
         setError("Error al cargar bienes de consumo");
         setArticulos([]);
       }
@@ -144,34 +157,66 @@ export default function BienesConsumo() {
   const filtro = busqueda.toLowerCase();
 
   const articulosFiltrados = useMemo(() => {
-    return articulos.filter((art) => {
+    return (articulos || []).filter((art) => {
       const nombreMatch = art.nombre?.toLowerCase().includes(filtro);
       const descMatch = art.descripcion?.toLowerCase().includes(filtro);
-      const ubicacionMatch = art.existencias.some((ex) =>
+      const ubicacionMatch = (art.existencias || []).some((ex) =>
         ex.ubicacion?.toLowerCase().includes(filtro)
       );
       return nombreMatch || descMatch || ubicacionMatch;
     });
   }, [articulos, filtro]);
 
-  const filasTabla = articulosFiltrados.flatMap((articulo) =>
-    articulo.existencias.map((item, i) => ({
-      key: `${articulo.id}-${item.existencia_id || i}`,
-      nombre: articulo.nombre,
-      descripcion: articulo.descripcion,
-      ubicacion: item.ubicacion,
-      cantidad: item.cantidad,
-      pendiente: item.pendiente,
-    }))
-  );
+  const filasTabla = useMemo(() => {
+    return articulosFiltrados.flatMap((articulo) =>
+      (articulo.existencias || []).map((item, i) => ({
+        key: `${articulo.id}-${item.existencia_id || i}`,
+        nombre: articulo.nombre,
+        ubicacion: item.ubicacion,
+        cantidad: item.cantidad,
+      }))
+    );
+  }, [articulosFiltrados]);
+
+  // Exportar PDF
+  const onExportarPDF = () => {
+    if (!filasTabla.length) {
+      alert("No hay datos para exportar");
+      return;
+    }
+    const rows = filasTabla.map((f) => ({
+      nombre: f.nombre,
+      ubicacion: f.ubicacion || "—",
+      cantidad: f.cantidad ?? 0,
+    }));
+
+    exportTableToPDF({
+      title: "Bienes de Consumo",
+      columns: pdfColumns,
+      rows,
+      fileName: "bienes_consumo.pdf",
+      widthPercents,
+      landscape: false, // poné true si preferís horizontal
+      fontSize: 9,
+      // Si en tu helper soportás estilos de encabezado, podés pasar algo como:
+      // headStyles: { halign: 'center' }
+    });
+  };
 
   return (
     <Container>
       <Title>Bienes de Consumo</Title>
+
       <ContainerHeader>
-        <CreateButton onClick={() => navigate("/crear-licitacion-consumo")}>
-          Crear Licitación
-        </CreateButton>
+        <ActionsRow>
+          <CreateButton onClick={() => navigate("/crear-licitacion-consumo")}>
+            Crear Licitación
+          </CreateButton>
+          <PrimaryButton onClick={onExportarPDF}>
+            Exportar PDF
+          </PrimaryButton>
+        </ActionsRow>
+
         <SearchInput
           type="text"
           placeholder="Buscar por nombre, descripción o ubicación..."
@@ -206,10 +251,10 @@ export default function BienesConsumo() {
                   <Tr key={fila.key}>
                     <Td>{fila.nombre}</Td>
                     <Td>{fila.descripcion || "Sin descripción"}</Td>
-                    <Td>{fila.ubicacion}</Td>
-                    <Td>{fila.cantidad}</Td>
-                    <Td style={{ color: fila.pendiente > 0 ? "#d9534f" : "#333" }}>
-                      {fila.pendiente}
+                    <Td>{fila.ubicacion || "—"}</Td>
+                    <Td>{fila.cantidad ?? 0}</Td>
+                    <Td style={{ color: (fila.pendiente ?? 0) > 0 ? "#d9534f" : "#333" }}>
+                      {fila.pendiente ?? 0}
                     </Td>
                   </Tr>
                 ))

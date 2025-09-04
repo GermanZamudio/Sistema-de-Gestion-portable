@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import Select from "react-select";
-
+import { exportOrdenServicioToPDF } from "../utils/exportOrdenServicioPdf";
 import ModalDeleteOrden from "../components/Modals/DeleteOrden";
 import ModalAsigando from "../components/Modals/CreateAsignado";
 
@@ -15,6 +15,7 @@ export default function OrdenServicio() {
   const [modalIdentOpen, setModalIdentOpen] = useState(false);
   const [modalSobranteOpen, setModalSobranteOpen] = useState(false);
   const [modalTipoAsignar, setModalTipoAsignar] = useState(""); // Nuevo estado para tipo
+  const [guardandoIdent, setGuardandoIdent] = useState(false);
 
   const [ordenServicio, setOrdenServicio] = useState({});
   const [edificio, setEdificio] = useState({});
@@ -22,6 +23,17 @@ export default function OrdenServicio() {
   const [identificados, setIdentificados] = useState([]);
   const [sobrantes, setSobrantes] = useState([]);
   const { id } = useParams();
+
+  const onExportarPDF = () => {
+    exportOrdenServicioToPDF({
+      orden: ordenServicio,
+      edificio,
+      articulos,
+      identificados,
+      sobrantes,
+      fileName: `orden_${ordenServicio?.id ?? "servicio"}.pdf`,
+    });
+  };
 
   useEffect(() => {
     fetchData();
@@ -43,6 +55,44 @@ export default function OrdenServicio() {
       }
     } catch {
       setError("Error al conectar con el backend.");
+    }
+  };
+  
+  const ModificarEntrega = async (asignadoIdentId) => {
+    
+    console.log("Fui clickeado, el id es: ",asignadoIdentId)
+    if (!asignadoIdentId) return;
+
+    setError("");
+    setMensaje("");
+    setGuardandoIdent(true);
+    console.log("Pase el primer if")
+    try {
+      const resp = await window.api.post(
+        `/api/orden_servicio/identificados/${asignadoIdentId}/entregar`,
+        { estado: "ENTREGADO" }
+      );
+
+
+      if (resp?.error) {
+        setError(resp.error || "No se pudo completar la entrega.");
+        return;
+      }
+
+      // Actualización optimista en UI
+      setIdentificados((prev) =>
+        prev.map((it) =>
+          it.id === asignadoIdentId ? { ...it, estado: "ENTREGADO" } : it
+        )
+      );
+
+      setMensaje("Artículo identificado entregado correctamente.");
+      // Si querés refrescar todo desde el backend:
+      // await fetchData();
+    } catch (e) {
+      setError(e?.message || "Error al entregar el artículo identificado.");
+    } finally {
+      setGuardandoIdent(false);
     }
   };
 
@@ -147,6 +197,10 @@ export default function OrdenServicio() {
       {ordenServicio.imagen && <ImagenOrden src={ordenServicio.imagen} alt={`Imagen de ${ordenServicio.nombre}`} />}
 
       <Titulo>Orden de Servicio: {ordenServicio?.nombre ?? "Sin nombre"}</Titulo>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <Button onClick={onExportarPDF}>Exportar PDF</Button>
+      </div>
+
       <Parrafo><strong>Fecha:</strong> {ordenServicio?.fecha ?? "-"}</Parrafo>
       <Parrafo><strong>Descripción:</strong> {ordenServicio?.descripcion ?? "-"}</Parrafo>
       <Parrafo><strong>Personal encargado:</strong> {ordenServicio?.responsable ?? "-"}</Parrafo>
@@ -310,8 +364,18 @@ export default function OrdenServicio() {
         <Lista>
           {identificados.map((item, index) => (
             <li key={item.id ?? index}>
-              {item.nombre_articulo} - Código: {item.codigo} - Estado: {item.estado}
+              {item.nombre_articulo} - Código: {item.codigo} - Estado: {item.estado}            
+              
+              {item.estado === "ASIGNADO" && (
+                <ButtonEstadoEntrega
+                  disabled={guardandoIdent}
+                  onClick={() => ModificarEntrega(item.id)}
+                >
+                  Entregar
+                </ButtonEstadoEntrega>
+              )}
             </li>
+
           ))}
         </Lista>
       ) : (
@@ -447,6 +511,27 @@ const Button = styled.button`
   }
 `;
 
+const ButtonEstadoEntrega = styled.button`
+  background-color: #357edd;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 8px;        // ⇦ espacio respecto al texto
+  transition: background-color 0.3s ease;
+
+  &:disabled {
+    background-color: #a6c8ff;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #285bb5;
+  }
+`;
+
 const ButtonNew = styled.button`
   margin-bottom: 15px;
   padding: 6px 10px;
@@ -468,6 +553,7 @@ const Lista = styled.ul`
   padding-left: 15px;
   font-size: 14px;
   margin-bottom: 15px;
+  display: flex;
 
   li {
     margin-bottom: 4px;
@@ -477,6 +563,7 @@ const Lista = styled.ul`
 const LinksWrapper = styled.div`
   margin-top: 20px;
   text-align: center;
+
 `;
 
 const StyledLink = styled(Link)`

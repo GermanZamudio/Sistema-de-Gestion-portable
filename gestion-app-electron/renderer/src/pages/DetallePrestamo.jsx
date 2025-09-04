@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Select from "react-select";
+import { exportPrestamoDetalleToPDF } from "../utils/exportPrestamoDetallePdf";
 
 export default function DetallePrestamo() {
   const [error, setError] = useState("");
@@ -11,6 +12,31 @@ export default function DetallePrestamo() {
   const [herramientas, setHerramientas] = useState([]);
   const [cantidadParcial, setCantidadParcial] = useState({});
   const [erroresPorArticulo, setErroresPorArticulo] = useState({});
+
+  const onExportarPDF = () => {
+    const meta = {
+      id: prestamo?.id,
+      nombre: prestamo?.nombre,
+      fecha: prestamo?.fecha,
+      autorizado: prestamo?.autorizado,
+      locacion: prestamo?.locacion,
+      estado: prestamo?.estado,
+    };
+  
+    // Armamos items desde "herramientas"
+    const items = (herramientas || []).map((h) => ({
+      nombre: h?.nombre,
+      cantidad: h?.cantidad,
+      cantidad_devuelta: h?.cantidad_devuelta,
+      tipo_bien: h?.tipo_bien, // suele venir "HERRAMIENTA"
+    }));
+  
+    exportPrestamoDetalleToPDF({
+      meta,
+      items,
+      fileName: `prestamo_${meta.id || "detalle"}.pdf`,
+    });
+  };
 
   const { id } = useParams();
 
@@ -105,6 +131,9 @@ export default function DetallePrestamo() {
       {error && <MensajeError>{error}</MensajeError>}
 
       <Titulo>Orden de Prestamo: {prestamo?.nombre || "Sin nombre"}</Titulo>
+      <div style={{ margin: "8px 0 14px 0" }}>
+        <ButtonAzul onClick={onExportarPDF}>Exportar PDF</ButtonAzul>
+      </div>
       <Parrafo><strong>Fecha:</strong> {prestamo?.fecha ?? "-"}</Parrafo>
       <Parrafo><strong>Personal encargado:</strong> {prestamo?.autorizado ?? "-"}</Parrafo>
 

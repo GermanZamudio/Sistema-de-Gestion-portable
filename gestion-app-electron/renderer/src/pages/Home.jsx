@@ -173,10 +173,9 @@ const Container = styled.div`
   }
 `;
 
-const Title = styled.h1`
+const Title = styled.p`
   text-align: center;
   font-size: 2rem;
-  font-weight: 700;
   margin-bottom: 8px;
   color: #222;
 `;
@@ -189,13 +188,13 @@ const Subtitle = styled.h2`
   margin-bottom: 24px;
 `;
 
-const SubTitle = styled.h2`
+const SubTitle = styled.p`
   margin-top: 32px;
   margin-bottom: 16px;
   color: #2c3e50;
   border-bottom: 2px solid #2980b9;
   padding-bottom: 4px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 1rem;
 `;
 
@@ -235,7 +234,6 @@ const Tile = styled(Link)`
 const Label = styled.div`
   font-size: 1rem;
   text-align: center;
-  font-weight: 600;
   color: #333;
 `;
 

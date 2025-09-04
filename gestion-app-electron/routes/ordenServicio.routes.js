@@ -44,7 +44,9 @@ router.get('/orden_servicio/:id', (req, res) => {
 
 
     const articulos_asignados_identificados = db.prepare(`
-      SELECT asi.estado,
+      SELECT 
+              asi.id AS id,
+              asi.estado,
              a.nombre AS nombre_articulo,
              ai.codigo
       FROM articulos_identificados_asignados asi
@@ -573,7 +575,78 @@ router.post('/reabrir_orden_servicio/:id',(req,res)=>{
 });
 
 
+router.post('/orden_servicio/identificados/:asignadoId/entregar', (req, res) => {
+  try {
 
+    const asignadoId = parseInt(req.params.asignadoId, 10);
+    if (!Number.isInteger(asignadoId) || asignadoId <= 0) {
+      console.log("id invalido")
+      return res.status(400).json({ error: 'asignadoId inválido' });
+      
+    }
+
+    const nuevoEstado = (req.body?.estado || 'ENTREGADO').toUpperCase().trim();
+    const ESTADOS_VALIDOS = new Set(['ASIGNADO', 'ENTREGADO']);
+    if (!ESTADOS_VALIDOS.has(nuevoEstado)) {
+      console.log("Estado invalido")
+      return res.status(400).json({ error: 'Estado inválido para identificado' });
+    }
+
+    // 1) Traer la asignación
+    const asignacion = db.prepare(`
+      SELECT 
+        ai_asig.id,
+        ai_asig.articulo_identificado_id,
+        ai_asig.orden_servicio_id,
+        ai_asig.estado,
+        os.estado AS estado_orden
+      FROM articulos_identificados_asignados ai_asig
+      JOIN orden_servicio os ON os.id = ai_asig.orden_servicio_id
+      WHERE ai_asig.id = ?
+    `).get(asignadoId);
+
+    if (!asignacion) {
+      return res.status(404).json({ error: 'Asignación no encontrada' });
+    }
+
+    // 2) Validaciones de negocio
+    if (asignacion.estado === 'ENTREGADO') {
+      return res.json({ 
+        ok: true, 
+        message: 'La asignación ya estaba culminada.',
+        asignacion: { id: asignacion.id, estado: asignacion.estado }
+      });
+    }
+
+    if (asignacion.estado_orden === 'CULMINADO') {
+      return res.status(409).json({ error: 'No se puede modificar: la orden está culminada.' });
+    }
+    console.log("Estoy por hacer la transaccion")
+    // 3) Transacción: actualizar estado (+ fecha de entrega)
+    const tx = db.transaction(() => {
+      db.prepare(`
+        UPDATE articulos_identificados_asignados
+        SET estado = ?
+        WHERE id = ?
+      `).run(nuevoEstado, asignadoId);
+
+    });
+
+    tx();
+    return res.json({
+      ok: true,
+      message: 'Artículo identificado entregado correctamente.',
+      asignacion: {
+        id: asignadoId,
+        estado: nuevoEstado
+      }
+    });
+  } catch (err) {
+    console.log(err)
+    console.error('Error en POST /orden_servicio/identificados/:asignadoId/entregar', err);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+});
 
 
 module.exports = router;
