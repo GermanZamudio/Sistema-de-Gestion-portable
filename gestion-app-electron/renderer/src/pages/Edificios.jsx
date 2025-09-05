@@ -38,7 +38,7 @@ export default function EdificiosDepartamentos() {
     }));
   };
 
-  const openModal = (title, url, camposAuto = {}, camposIgnorados = []) => {
+  const openModal = (title, url, camposAuto = {}, camposIgnorados = ["estado"]) => {
     setModalTitle(title);
     setModalUrl(url);
     setCamposAuto(camposAuto);

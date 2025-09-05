@@ -26,6 +26,8 @@ import ListaOrdenesServicio from './pages/ListaOrdenesServicio';
 import OrdenServicio from './pages/OrdenServicio';
 import CrearOrdenServicio from './pages/CrearOrdenServicio';
 
+import Movimientos from './pages/Movimientos';
+
 import Edificios from './pages/Edificios';
 import Vehiculos from './pages/Vehiculos';
 import Departamento from './pages/Departamento';
@@ -64,6 +66,7 @@ function App() {
           <Route path="/lista-prestamo" element={<ListaPrestamo />} />
           <Route path="/detalle-prestamo/:id" element={<DetallePrestamo />} />
 
+          <Route path="/movimientos/" element={<Movimientos />} />
 
           <Route path="/crear-licitacion-consumo" element={<CrearLicitacionConsumo/>} />
           <Route path="/crear-licitacion-uso" element={<CrearLicitacionUso/>} />

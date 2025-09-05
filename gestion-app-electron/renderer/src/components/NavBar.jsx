@@ -19,7 +19,8 @@ import {
   FaTable,
   FaChevronLeft,
   FaChevronRight,
-  FaCar
+  FaCar,
+  FaFileContract
 } from "react-icons/fa";
 
 // Ícono de marca
@@ -59,6 +60,7 @@ export default function NavBar() {
         <StyledLink to="/articulos" collapsed={collapsed}><FaTags /> {!collapsed && 'Artículos'}</StyledLink>
         <StyledLink to="/edificios" collapsed={collapsed}><FaBuilding /> {!collapsed && 'Edificios'}</StyledLink>
         <StyledLink to="/vehiculos" collapsed={collapsed}><FaCar /> {!collapsed && 'Vehículos'}</StyledLink>
+        <StyledLink to="/movimientos" collapsed={collapsed}><FaFileContract /> {!collapsed && 'Movimientos'}</StyledLink>
         <StyledLink to="/tablas-auxiliares" collapsed={collapsed}><FaTable /> {!collapsed && 'Tablas Auxiliares'}</StyledLink>
       </Menu>
     </Sidebar>

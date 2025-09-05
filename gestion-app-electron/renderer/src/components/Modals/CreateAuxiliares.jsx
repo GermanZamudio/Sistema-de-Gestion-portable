@@ -69,10 +69,12 @@ const handleSubmit = async (e) => {
   }
 
   // ✅ Si la tabla es 'proveedor', modificar el valor de 'estado' a 1
-  if (url === 'proveedor') {
+  if (url === 'proveedor' ) {
     formData.set('estado', '1'); // Reemplaza si ya existe, o lo agrega si no estaba
   }
-
+  if (url === 'departamento' ) {
+    formData.set('estado', 'ACTIVO'); // Reemplaza si ya existe, o lo agrega si no estaba
+  }
   try {
     console.log(url);
     for (let pair of formData.entries()) {

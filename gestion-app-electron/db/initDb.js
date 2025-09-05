@@ -250,308 +250,234 @@ function initDatabase() {
   `).run();
 
 
-  //Tabla de movimientos generales: 
+
+  /************** MOVIMIENTOS ****************/
   db.prepare(`
     CREATE TABLE IF NOT EXISTS movimientos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    articulo_id INTEGER NOT NULL,
-    tipo_movimiento TEXT CHECK (tipo_movimiento IN ('ENTRADA', 'UPDATE','SALIDA')) NOT NULL,
-    cantidad INTEGER NOT NULL,
-    fecha TEXT DEFAULT CURRENT_TIMESTAMP,
-    fuente TEXT,         -- 'orden_compra', 'orden_servicio', 'Herramienta' etc.
-    fuente_id INTEGER,   -- ID de la orden relacionada
-    observaciones TEXT
-  );`).run();
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      articulo_id INTEGER NOT NULL,
+      tipo_movimiento TEXT CHECK (tipo_movimiento IN ('ENTRADA', 'UPDATE','SALIDA')) NOT NULL,
+      cantidad INTEGER NOT NULL,
+      fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+      fuente TEXT,         -- 'orden_compra', 'orden_servicio', 'prestamo', 'articulo_identificado', 'sobrante', 'sobrante_utilizado'
+      fuente_id INTEGER,   -- ID de la entidad relacionada
+      observaciones TEXT
+    )
+  `).run();
 
- db.exec(`
-
-  -- TRIGGER para INSERT en articulos_orden_compra (entrada stock)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_orden_compra_insert
-AFTER INSERT ON articulos_orden_compra
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id, 'ENTRADA', NEW.cantidad_recibida, CURRENT_TIMESTAMP,
-'orden_compra', NEW.orden_id, 'Ingreso por orden de compra'
-);
-END;
-
--- TRIGGER para UPDATE en articulos_orden_compra (entrada parcial)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_orden_compra_update
-AFTER UPDATE OF cantidad_recibida ON articulos_orden_compra
-FOR EACH ROW
-WHEN NEW.cantidad_recibida > OLD.cantidad_recibida
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id, 'ENTRADA',
-NEW.cantidad_recibida - OLD.cantidad_recibida, CURRENT_TIMESTAMP,
-'orden_compra', NEW.orden_id, 'Entrega parcial registrada'
-);
-END;
-
--- TRIGGER para DELETE en articulos_orden_compra
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_orden_compra_delete
-AFTER DELETE ON articulos_orden_compra
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-OLD.articulo_id, 'SALIDA', OLD.cantidad_recibida, CURRENT_TIMESTAMP,
-'orden_compra', OLD.orden_id, 'Eliminación de artículo en orden de compra, stock reducido'
-);
-END;
-
--- TRIGGER para INSERT en articulos_asignados (salida stock)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_asignados_insert
-AFTER INSERT ON articulos_asignados
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id, 'SALIDA', NEW.cantidad_asignada, CURRENT_TIMESTAMP,
-'orden_servicio', NEW.orden_servicio_id, 'Asignación a orden de servicio'
-);
-END;
-
--- TRIGGER para UPDATE en articulos_asignados (cambio de cantidad)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_asignados_update
-AFTER UPDATE OF cantidad_asignada ON articulos_asignados
-FOR EACH ROW
-WHEN NEW.cantidad_asignada != OLD.cantidad_asignada
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id,
-CASE WHEN NEW.cantidad_asignada > OLD.cantidad_asignada THEN 'SALIDA' ELSE 'ENTRADA' END,
-ABS(NEW.cantidad_asignada - OLD.cantidad_asignada), CURRENT_TIMESTAMP,
-'orden_servicio', NEW.orden_servicio_id, 'Actualización de cantidad asignada'
-);
-END;
-
--- TRIGGER para DELETE en articulos_asignados
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_asignados_delete
-AFTER DELETE ON articulos_asignados
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-OLD.articulo_id, 'ENTRADA', OLD.cantidad_asignada, CURRENT_TIMESTAMP,
-'orden_servicio', OLD.orden_servicio_id, 'Eliminación de asignación, devolución de stock'
-);
-END;
-
--- TRIGGER para UPDATE en articulos_asignados (cambio de estado a UTILIZADO)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_asignados_estado_utilizado
-AFTER UPDATE OF estado ON articulos_asignados
-FOR EACH ROW
-WHEN NEW.estado = 'UTILIZADO' AND OLD.estado != 'UTILIZADO'
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id, 'SALIDA', NEW.cantidad_asignada, CURRENT_TIMESTAMP,
-'orden_servicio', NEW.orden_servicio_id, 'Confirmación de uso del artículo (estado UTILIZADO)'
-);
-END;
-
--- TRIGGER para INSERT en repuestos_asignados
-CREATE TRIGGER IF NOT EXISTS trigger_repuestos_asignados_insert
-AFTER INSERT ON repuestos_asignados
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id, 'SALIDA', NEW.cantidad, CURRENT_TIMESTAMP,
-'orden_reparacion', NEW.orden_reparacion_id, 'Repuesto asignado a reparación'
-);
-END;
-
--- TRIGGER para UPDATE en repuestos_asignados
-CREATE TRIGGER IF NOT EXISTS trigger_repuestos_asignados_update
-AFTER UPDATE OF cantidad ON repuestos_asignados
-FOR EACH ROW
-WHEN NEW.cantidad != OLD.cantidad
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-NEW.articulo_id,
-CASE WHEN NEW.cantidad > OLD.cantidad THEN 'SALIDA' ELSE 'ENTRADA' END,
-ABS(NEW.cantidad - OLD.cantidad), CURRENT_TIMESTAMP,
-'orden_reparacion', NEW.orden_reparacion_id, 'Actualización de cantidad repuesto asignado'
-);
-END;
-
--- TRIGGER para DELETE en repuestos_asignados
-CREATE TRIGGER IF NOT EXISTS trigger_repuestos_asignados_delete
-AFTER DELETE ON repuestos_asignados
-FOR EACH ROW
-BEGIN
-INSERT INTO movimientos (
-articulo_id, tipo_movimiento, cantidad, fecha,
-fuente, fuente_id, observaciones
-)
-VALUES (
-OLD.articulo_id, 'ENTRADA', OLD.cantidad, CURRENT_TIMESTAMP,
-'orden_reparacion', OLD.orden_reparacion_id, 'Eliminación de repuesto asignado, devolución de stock'
-);
-END;
-
--- TRIGGER para reversión de BAJA
-CREATE TRIGGER IF NOT EXISTS trigger_articulo_identificado_revertir_baja
-AFTER UPDATE OF estado ON articulo_identificado
-FOR EACH ROW
-WHEN OLD.estado = 'BAJA' AND NEW.estado != 'BAJA'
-BEGIN
-INSERT INTO movimientos (
-articulo_id,
-tipo_movimiento,
-cantidad,
-fecha,
-fuente,
-fuente_id,
-observaciones
-)
-VALUES (
-NEW.id_articulo,
-'ENTRADA',
-1,
-CURRENT_TIMESTAMP,
-'articulo_identificado',
-NEW.id,
-'Reversión de baja, artículo identificado rehabilitado'
-);
-END;
-
--- TRIGGER para cambio de estado a BAJA en articulo_identificado
-CREATE TRIGGER IF NOT EXISTS trigger_articulo_identificado_baja
-AFTER UPDATE OF estado ON articulo_identificado
-FOR EACH ROW
-WHEN NEW.estado = 'BAJA' AND OLD.estado != 'BAJA'
-BEGIN
-  INSERT INTO movimientos (
-    articulo_id,
-    tipo_movimiento,
-    cantidad,
-    fecha,
-    fuente,
-    fuente_id,
-    observaciones
-  )
-  VALUES (
-    NEW.id_articulo,
-    'SALIDA',
-    1,
-    CURRENT_TIMESTAMP,
-    'articulo_identificado',
-    NEW.id,
-    'Artículo identificado dado de baja'
-  );
-END;
--- TRIGGER para INSERT en articulos_prestados (SALIDA)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_prestados_insert
-AFTER INSERT ON articulos_prestados
-FOR EACH ROW
-BEGIN
-  INSERT INTO movimientos (
-    articulo_id,
-    tipo_movimiento,
-    cantidad,
-    fecha,
-    fuente,
-    fuente_id,
-    observaciones
-  )
-  VALUES (
-    NEW.articulo_id,
-    'SALIDA',
-    NEW.cantidad,
-    CURRENT_TIMESTAMP,
-    'prestamo',
-    NEW.prestamo_id,
-    'Artículo prestado'
-  );
-END;
-
--- TRIGGER para UPDATE de estado en articulos_prestados (ENTRADA si se devuelve)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_prestados_estado_devuelto
-AFTER UPDATE OF estado ON articulos_prestados
-FOR EACH ROW
-WHEN OLD.estado != 'DEVUELTO' AND NEW.estado = 'DEVUELTO'
-BEGIN
-  INSERT INTO movimientos (
-    articulo_id,
-    tipo_movimiento,
-    cantidad,
-    fecha,
-    fuente,
-    fuente_id,
-    observaciones
-  )
-  VALUES (
-    NEW.articulo_id,
-    'ENTRADA',
-    NEW.cantidad,
-    CURRENT_TIMESTAMP,
-    'prestamo',
-    NEW.prestamo_id,
-    'Devolución de artículo prestado'
-  );
-END;
-
--- TRIGGER para DELETE de articulos_prestados (se asume que se devuelve)
-CREATE TRIGGER IF NOT EXISTS trigger_articulos_prestados_delete
-AFTER DELETE ON articulos_prestados
-FOR EACH ROW
-BEGIN
-  INSERT INTO movimientos (
-    articulo_id,
-    tipo_movimiento,
-    cantidad,
-    fecha,
-    fuente,
-    fuente_id,
-    observaciones
-  )
-  VALUES (
-    OLD.articulo_id,
-    'ENTRADA',
-    OLD.cantidad,
-    CURRENT_TIMESTAMP,
-    'prestamo',
-    OLD.prestamo_id,
-    'Eliminación de artículo prestado, se devuelve al stock'
-  );
-END;
+  // Índices útiles (lecturas rápidas)
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos (fecha DESC);
+    CREATE INDEX IF NOT EXISTS idx_movimientos_articulo ON movimientos (articulo_id);
+    CREATE INDEX IF NOT EXISTS idx_movimientos_fuente ON movimientos (fuente, fuente_id);
   `);
 
+  /***************** TRIGGERS ******************/
+  db.exec(`
+    ------------------------------------------------------------------
+    -- ORDEN DE COMPRA: entradas de stock por recepción
+    ------------------------------------------------------------------
+
+    -- Insert inicial: registra lo recibido (si hubiera cantidad_recibida)
+    CREATE TRIGGER IF NOT EXISTS trg_oc_insert
+    AFTER INSERT ON articulos_orden_compra
+    FOR EACH ROW
+    WHEN NEW.cantidad_recibida IS NOT NULL AND NEW.cantidad_recibida > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.articulo_id, 'ENTRADA', NEW.cantidad_recibida, CURRENT_TIMESTAMP, 'orden_compra', NEW.orden_id, 'Ingreso por orden de compra (insert)');
+    END;
+
+    -- Recepción parcial / adicional (aumenta cantidad_recibida)
+    CREATE TRIGGER IF NOT EXISTS trg_oc_update_recibida
+    AFTER UPDATE OF cantidad_recibida ON articulos_orden_compra
+    FOR EACH ROW
+    WHEN NEW.cantidad_recibida > OLD.cantidad_recibida
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.articulo_id, 'ENTRADA', NEW.cantidad_recibida - OLD.cantidad_recibida, CURRENT_TIMESTAMP, 'orden_compra', NEW.orden_id, 'Entrega parcial registrada');
+    END;
+
+    -- Eliminación de la línea: descuenta lo recibido de stock (rollback)
+    CREATE TRIGGER IF NOT EXISTS trg_oc_delete
+    AFTER DELETE ON articulos_orden_compra
+    FOR EACH ROW
+    WHEN OLD.cantidad_recibida IS NOT NULL AND OLD.cantidad_recibida > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (OLD.articulo_id, 'SALIDA', OLD.cantidad_recibida, CURRENT_TIMESTAMP, 'orden_compra', OLD.orden_id, 'Eliminación de artículo en orden de compra');
+    END;
+
+    ------------------------------------------------------------------
+    -- ORDEN DE SERVICIO (artículos genéricos): salida al ENTREGAR
+    -- 🔁 CAMBIO CLAVE: movemos stock cuando cambia cantidad_entregada,
+    --     NO al asignar. Si se reduce lo entregado, registramos ENTRADA.
+    ------------------------------------------------------------------
+
+    CREATE TRIGGER IF NOT EXISTS trg_os_update_entregada
+    AFTER UPDATE OF cantidad_entregada ON articulos_asignados
+    FOR EACH ROW
+    WHEN NEW.cantidad_entregada != OLD.cantidad_entregada
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (
+        NEW.articulo_id,
+        CASE WHEN NEW.cantidad_entregada > OLD.cantidad_entregada THEN 'SALIDA' ELSE 'ENTRADA' END,
+        ABS(NEW.cantidad_entregada - OLD.cantidad_entregada),
+        CURRENT_TIMESTAMP,
+        'orden_servicio',
+        NEW.orden_servicio_id,
+        'Cambio en cantidad entregada'
+      );
+    END;
+
+    -- Si se elimina la línea: si tenía algo entregado, retorna ese stock.
+    CREATE TRIGGER IF NOT EXISTS trg_os_delete
+    AFTER DELETE ON articulos_asignados
+    FOR EACH ROW
+    WHEN OLD.cantidad_entregada IS NOT NULL AND OLD.cantidad_entregada > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (OLD.articulo_id, 'ENTRADA', OLD.cantidad_entregada, CURRENT_TIMESTAMP, 'orden_servicio', OLD.orden_servicio_id, 'Eliminación de asignación: devuelve lo entregado');
+    END;
+
+    ------------------------------------------------------------------
+    -- ORDEN DE SERVICIO (identificados): salida al CULMINAR
+    --   y entrada si se revierte a ASIGNADO.
+    ------------------------------------------------------------------
+
+    -- Al pasar a CULMINADO, SALIDA de 1 unidad del artículo base
+    CREATE TRIGGER IF NOT EXISTS trg_os_ident_culminado
+    AFTER UPDATE OF estado ON articulos_identificados_asignados
+    FOR EACH ROW
+    WHEN NEW.estado = 'CULMINADO' AND OLD.estado != 'CULMINADO'
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      SELECT
+        ai.id_articulo,
+        'SALIDA',
+        1,
+        CURRENT_TIMESTAMP,
+        'articulo_identificado',
+        NEW.id,
+        'Identificado culminado (entregado en OS)'
+      FROM articulo_identificado ai
+      WHERE ai.id = NEW.articulo_identificado_id;
+    END;
+
+    -- Si se revierte de CULMINADO a ASIGNADO, ENTRADA de 1 unidad
+    CREATE TRIGGER IF NOT EXISTS trg_os_ident_revert
+    AFTER UPDATE OF estado ON articulos_identificados_asignados
+    FOR EACH ROW
+    WHEN OLD.estado = 'CULMINADO' AND NEW.estado = 'ASIGNADO'
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      SELECT
+        ai.id_articulo,
+        'ENTRADA',
+        1,
+        CURRENT_TIMESTAMP,
+        'articulo_identificado',
+        NEW.id,
+        'Reversión de entrega de identificado en OS'
+      FROM articulo_identificado ai
+      WHERE ai.id = NEW.articulo_identificado_id;
+    END;
+
+    ------------------------------------------------------------------
+    -- ARTÍCULO IDENTIFICADO: BAJA y reversión de BAJA
+    ------------------------------------------------------------------
+
+    CREATE TRIGGER IF NOT EXISTS trg_ident_baja
+    AFTER UPDATE OF estado ON articulo_identificado
+    FOR EACH ROW
+    WHEN NEW.estado = 'BAJA' AND OLD.estado != 'BAJA'
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.id_articulo, 'SALIDA', 1, CURRENT_TIMESTAMP, 'articulo_identificado', NEW.id, 'Artículo identificado dado de baja');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_ident_revert_baja
+    AFTER UPDATE OF estado ON articulo_identificado
+    FOR EACH ROW
+    WHEN OLD.estado = 'BAJA' AND NEW.estado != 'BAJA'
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.id_articulo, 'ENTRADA', 1, CURRENT_TIMESTAMP, 'articulo_identificado', NEW.id, 'Reversión de baja (rehabilitado)');
+    END;
+
+    ------------------------------------------------------------------
+    -- PRÉSTAMOS: salida al prestar, entrada por devoluciones parciales
+    ------------------------------------------------------------------
+
+    -- Al crear el préstamo de un artículo: SALIDA de la cantidad prestada
+    CREATE TRIGGER IF NOT EXISTS trg_prestamo_insert
+    AFTER INSERT ON articulos_prestados
+    FOR EACH ROW
+    WHEN NEW.cantidad IS NOT NULL AND NEW.cantidad > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.articulo_id, 'SALIDA', NEW.cantidad, CURRENT_TIMESTAMP, 'prestamo', NEW.prestamo_id, 'Artículo prestado');
+    END;
+
+    -- Devolución parcial: al aumentar cantidad_devuelta, ENTRADA del delta
+    CREATE TRIGGER IF NOT EXISTS trg_prestamo_update_devuelta
+    AFTER UPDATE OF cantidad_devuelta ON articulos_prestados
+    FOR EACH ROW
+    WHEN NEW.cantidad_devuelta > OLD.cantidad_devuelta
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.articulo_id, 'ENTRADA', NEW.cantidad_devuelta - OLD.cantidad_devuelta, CURRENT_TIMESTAMP, 'prestamo', NEW.prestamo_id, 'Devolución parcial de préstamo');
+    END;
+
+    -- Si se borra la línea y había cantidad no devuelta: ENTRADA de lo pendiente
+    CREATE TRIGGER IF NOT EXISTS trg_prestamo_delete
+    AFTER DELETE ON articulos_prestados
+    FOR EACH ROW
+    WHEN (OLD.cantidad - COALESCE(OLD.cantidad_devuelta,0)) > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (OLD.articulo_id, 'ENTRADA', OLD.cantidad - COALESCE(OLD.cantidad_devuelta,0), CURRENT_TIMESTAMP, 'prestamo', OLD.prestamo_id, 'Eliminación de línea: devuelve pendiente');
+    END;
+
+    ------------------------------------------------------------------
+    -- SOBRANTES: entrada cuando se registra, salida cuando se utiliza
+    ------------------------------------------------------------------
+
+    -- Registrar sobrante: ENTRADA
+    CREATE TRIGGER IF NOT EXISTS trg_sobrante_insert
+    AFTER INSERT ON sobrantes
+    FOR EACH ROW
+    WHEN NEW.cantidad IS NOT NULL AND NEW.cantidad > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      VALUES (NEW.articulo_id, 'ENTRADA', NEW.cantidad, CURRENT_TIMESTAMP, 'sobrante', NEW.orden_id, 'Registro de sobrante');
+    END;
+
+    -- Usar sobrante: SALIDA (toma articulo_id desde la tabla sobrantes)
+    CREATE TRIGGER IF NOT EXISTS trg_sobrante_utilizado_insert
+    AFTER INSERT ON sobrante_utilizado
+    FOR EACH ROW
+    WHEN NEW.cantidad IS NOT NULL AND NEW.cantidad > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      SELECT s.articulo_id, 'SALIDA', NEW.cantidad, CURRENT_TIMESTAMP, 'sobrante_utilizado', NEW.orden_id, 'Uso de sobrante'
+      FROM sobrantes s
+      WHERE s.id = NEW.sobrante_id;
+    END;
+
+    -- Si se elimina el uso del sobrante: ENTRADA
+    CREATE TRIGGER IF NOT EXISTS trg_sobrante_utilizado_delete
+    AFTER DELETE ON sobrante_utilizado
+    FOR EACH ROW
+    WHEN OLD.cantidad IS NOT NULL AND OLD.cantidad > 0
+    BEGIN
+      INSERT INTO movimientos (articulo_id, tipo_movimiento, cantidad, fecha, fuente, fuente_id, observaciones)
+      SELECT s.articulo_id, 'ENTRADA', OLD.cantidad, CURRENT_TIMESTAMP, 'sobrante_utilizado', OLD.orden_id, 'Reversión de uso de sobrante'
+      FROM sobrantes s
+      WHERE s.id = OLD.sobrante_id;
+    END;
+  `);
   console.log("Todas las tablas fueron creadas (si no existían).");
 }
 

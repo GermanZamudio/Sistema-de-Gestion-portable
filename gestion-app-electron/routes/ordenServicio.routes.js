@@ -649,4 +649,181 @@ router.post('/orden_servicio/identificados/:asignadoId/entregar', (req, res) => 
 });
 
 
+// map de columnas válidas para ordenamiento
+const SORT_MAP = {
+  fecha:       'm.fecha',
+  articulo:    'a.nombre',
+  tipo:        'm.tipo_movimiento',
+  cantidad:    'm.cantidad',
+  fuente:      'm.fuente'
+};
+
+router.get('/movimientos', (req, res) => {
+  try {
+    const {
+      q = '',
+      tipo = '',
+      fuente = '',
+      desde = '',
+      hasta = '',
+      page = '1',
+      pageSize = '20',
+      sortBy = 'fecha',
+      sortDir = 'desc'
+    } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(pageSize, 10) || 20, 1), 200);
+    const offset = (pageNum - 1) * limit;
+
+    const orderCol = SORT_MAP[sortBy] || SORT_MAP.fecha;
+    const orderDir = String(sortDir).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    const where = [];
+    const params = {};
+
+    if (q) {
+      // busca en nombre de artículo y observaciones
+      where.push(`(LOWER(a.nombre) LIKE LOWER(@q) OR LOWER(COALESCE(m.observaciones,'')) LIKE LOWER(@q))`);
+      params.q = `%${q}%`;
+    }
+    if (tipo) {
+      where.push(`m.tipo_movimiento = @tipo`);
+      params.tipo = tipo;
+    }
+    if (fuente) {
+      where.push(`m.fuente = @fuente`);
+      params.fuente = fuente;
+    }
+    if (desde) {
+      where.push(`date(m.fecha) >= date(@desde)`);
+      params.desde = desde;
+    }
+    if (hasta) {
+      where.push(`date(m.fecha) <= date(@hasta)`);
+      params.hasta = hasta;
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const baseSelect = `
+      FROM movimientos m
+      LEFT JOIN articulo a ON a.id = m.articulo_id
+      ${whereSql}
+    `;
+
+    const totalStmt = db.prepare(`SELECT COUNT(*) AS total ${baseSelect}`);
+    const { total } = totalStmt.get(params) || { total: 0 };
+
+    const rowsStmt = db.prepare(`
+      SELECT
+        m.id,
+        m.fecha,
+        m.tipo_movimiento,
+        m.cantidad,
+        m.fuente,
+        m.fuente_id,
+        m.observaciones,
+        m.articulo_id,
+        a.nombre AS articulo_nombre,
+        a.codigo  AS articulo_codigo,
+        a.tipo_bien AS articulo_tipo
+      ${baseSelect}
+      ORDER BY ${orderCol} ${orderDir}
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    const data = rowsStmt.all(params);
+
+    res.json({
+      data,
+      page: pageNum,
+      pageSize: limit,
+      total,
+      totalPages: Math.ceil(total / limit) || 1
+    });
+  } catch (err) {
+    console.error('GET /movimientos error', err);
+    res.status(500).json({ error: 'Error al obtener movimientos' });
+  }
+});
+
+// pequeño endpoint para exportar CSV según los mismos filtros (sin paginar)
+router.get('/movimientos/export/csv', (req, res) => {
+  try {
+    const {
+      q = '',
+      tipo = '',
+      fuente = '',
+      desde = '',
+      hasta = '',
+      sortBy = 'fecha',
+      sortDir = 'desc'
+    } = req.query;
+
+    const orderCol = SORT_MAP[sortBy] || SORT_MAP.fecha;
+    const orderDir = String(sortDir).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    const where = [];
+    const params = {};
+    if (q) {
+      where.push(`(LOWER(a.nombre) LIKE LOWER(@q) OR LOWER(COALESCE(m.observaciones,'')) LIKE LOWER(@q))`);
+      params.q = `%${q}%`;
+    }
+    if (tipo) {
+      where.push(`m.tipo_movimiento = @tipo`);
+      params.tipo = tipo;
+    }
+    if (fuente) {
+      where.push(`m.fuente = @fuente`);
+      params.fuente = fuente;
+    }
+    if (desde) {
+      where.push(`date(m.fecha) >= date(@desde)`);
+      params.desde = desde;
+    }
+    if (hasta) {
+      where.push(`date(m.fecha) <= date(@hasta)`);
+      params.hasta = hasta;
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const rows = db.prepare(`
+      SELECT
+        m.id,
+        m.fecha,
+        m.tipo_movimiento,
+        m.cantidad,
+        m.fuente,
+        m.fuente_id,
+        m.observaciones,
+        a.nombre AS articulo_nombre,
+        a.codigo  AS articulo_codigo,
+        a.tipo_bien AS articulo_tipo
+      FROM movimientos m
+      LEFT JOIN articulo a ON a.id = m.articulo_id
+      ${whereSql}
+      ORDER BY ${orderCol} ${orderDir}
+    `).all(params);
+
+    // CSV simple
+    const headers = [
+      'id','fecha','tipo_movimiento','cantidad',
+      'fuente','fuente_id','articulo_nombre','articulo_codigo','articulo_tipo','observaciones'
+    ];
+    const lines = [headers.join(',')].concat(
+      rows.map(r => headers.map(h => (r[h] ?? '')).join(','))
+    );
+    const csv = lines.join('\n');
+
+    res.setHeader('Content-Type','text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition','attachment; filename="movimientos.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error('GET /movimientos/export/csv error', err);
+    res.status(500).json({ error: 'No se pudo exportar CSV' });
+  }
+});
+
+
 module.exports = router;
