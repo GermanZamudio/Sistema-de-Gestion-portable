@@ -89,6 +89,91 @@ router.get('/existencias/:tipo', (req, res) => {
     res.status(500).json({ error: 'Error al obtener existencias' });
   }
 });
+
+router.get('/sobrantes', (req, res) => {
+  try {
+    const filas = db.prepare(`
+      SELECT
+        s.id                AS sobrante_id,
+        s.cantidad          AS cantidad,
+        s.fecha             AS fecha,
+        u.nombre            AS ubicacion,
+
+        a.id                AS articulo_id,
+        a.nombre            AS articulo_nombre,
+        a.descripcion       AS descripcion,
+        a.imagen            AS imagen,
+        a.tipo_bien         AS tipo_bien,
+
+        o.id                AS orden_numero,          -- número de orden (id)
+        d.piso              AS depto_piso,
+        d.numero            AS depto_numero,
+        ed.nombre           AS edificio_nombre
+      FROM articulo a
+      LEFT JOIN sobrantes s         ON a.id = s.articulo_id
+      LEFT JOIN ubicacion u         ON u.id = s.ubicacion_id
+      LEFT JOIN orden_servicio o    ON o.id = s.orden_id
+      LEFT JOIN departamento d      ON d.id = o.departamento_id
+      LEFT JOIN edificio ed         ON ed.id = d.edificio_id
+      WHERE s.id IS NOT NULL
+      ORDER BY a.nombre, s.fecha DESC
+    `).all();
+
+    const mapa = new Map();
+
+    for (const fila of filas) {
+      const {
+        articulo_id,
+        articulo_nombre,
+        descripcion,
+        imagen,
+        tipo_bien,
+
+        sobrante_id,
+        cantidad,
+        fecha,
+        ubicacion,
+
+        orden_numero,
+        depto_piso,
+        depto_numero,
+        edificio_nombre,
+      } = fila;
+
+      const imagenBase64 = imagen
+        ? `data:image/jpeg;base64,${Buffer.from(imagen).toString('base64')}`
+        : null;
+
+      if (!mapa.has(articulo_id)) {
+        mapa.set(articulo_id, {
+          id: articulo_id,
+          nombre: articulo_nombre,
+          descripcion,
+          tipo_bien,
+          imagen: imagenBase64,
+          existencias: [],
+        });
+      }
+
+      mapa.get(articulo_id).existencias.push({
+        id: sobrante_id,
+        cantidad,
+        fecha,
+        ubicacion,
+        orden_numero,       // id de la orden
+        depto_piso,
+        depto_numero,
+        edificio_nombre,
+      });
+    }
+
+    res.json(Array.from(mapa.values()));
+  } catch (err) {
+    console.error('Error al obtener sobrantes:', err.message);
+    res.status(500).json({ error: 'Error al obtener sobrantes' });
+  }
+});
+
 /******Orden de servicio*******/
 
 router.post('/licitacion/uso', uploadUso.array('articulos[].imagen'), (req, res) => {

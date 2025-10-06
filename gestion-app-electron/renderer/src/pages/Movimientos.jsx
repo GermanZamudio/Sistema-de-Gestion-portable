@@ -216,7 +216,6 @@ export default function Movimientos() {
     { key: 'tipo', label: 'Tipo' },
     { key: 'cantidad', label: 'Cantidad' },
     { key: 'fuente', label: 'Fuente' },
-    { key: 'fuente_id', label: 'ID Fuente' },
     { key: 'observaciones', label: 'Observaciones' },
   ]), []);
 
@@ -239,7 +238,7 @@ export default function Movimientos() {
             <option value="">Todos</option>
             <option value="ENTRADA">ENTRADA</option>
             <option value="SALIDA">SALIDA</option>
-            <option value="UPDATE">UPDATE</option>
+            <option value="UPDATE">MODIFICACIÓN</option>
           </Select>
         </div>
         <div>
@@ -300,10 +299,13 @@ export default function Movimientos() {
                   {row.articulo_nombre ?? '-'}
                   {row.articulo_codigo ? ` (${row.articulo_codigo})` : ''}
                 </td>
-                <td>{row.tipo_movimiento}</td>
-                <td style={{textAlign:'right'}}>{row.cantidad}</td>
+                <td>
+                  {row.tipo_movimiento === "UPDATE"
+                    ? "MODIFICACIÓN"
+                    : row.tipo_movimiento}
+                </td>
+                <td style={{textAlign:'center'}}>{row.cantidad}</td>
                 <td>{row.fuente ?? '-'}</td>
-                <td>{row.fuente_id ?? '-'}</td>
                 <td>{row.observaciones ?? ''}</td>
               </tr>
             ))}

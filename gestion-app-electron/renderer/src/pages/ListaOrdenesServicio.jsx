@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
@@ -11,44 +11,76 @@ export default function ListaOrdenesServicio() {
     async function fetchData() {
       try {
         const response = await window.api.get("/api/generico/orden_servicio");
-        if (response.error) {
+        if (response?.error) {
           setError(response.error);
+          setData([]);
         } else {
-          setData(response.data);
+          setData(Array.isArray(response?.data) ? response.data : []);
+          setError("");
         }
       } catch (err) {
         setError("Error al cargar las órdenes de servicio");
+        setData([]);
       }
     }
     fetchData();
   }, []);
 
-  // Filtra órdenes por nombre, fecha o departamento
+  // Helper: texto “ubicación” según tipo (edificio vs vehículo)
+  const getUbicacionTexto = (orden) => {
+    const ed = orden.edificio_nombre?.toUpperCase().trim();
+    if (ed === "VEHICULO" || ed === "VEHÍCULO") {
+      // edificio = VEHICULO → piso = marca, numero = patente
+      const partes = [
+        "Vehículo",
+        orden.departamento_piso && `Marca: ${orden.departamento_piso}`,
+        orden.departamento_numero && `Patente: ${orden.departamento_numero}`,
+      ].filter(Boolean);
+      return partes.length ? partes.join(" – ") : "Vehículo";
+    }
+
+    if (orden.edificio_nombre) {
+      const partes = [
+        orden.edificio_nombre,
+        orden.departamento_piso && `Piso ${orden.departamento_piso}`,
+        orden.departamento_numero && `Depto ${orden.departamento_numero}`,
+      ].filter(Boolean);
+      return partes.length ? partes.join(" – ") : orden.edificio_nombre;
+    }
+
+    return "Sin departamento";
+  };
+
+  // Filtra por nombre, fecha o el texto de ubicación (incluye marca/patente si es vehículo)
   const filtrarOrdenes = (ordenes) => {
     const filtroLower = filtro.toLowerCase();
     return ordenes.filter((orden) => {
       const nombre = orden.nombre?.toLowerCase() || "";
       const fecha = orden.fecha?.toLowerCase() || "";
-      const departamento = orden.departamento_id
-        ? `${orden.departamento_numero} - Piso ${orden.departamento_piso}`.toLowerCase()
-        : "sin departamento";
+      const ubicacionTexto = getUbicacionTexto(orden).toLowerCase();
       return (
         nombre.includes(filtroLower) ||
         fecha.includes(filtroLower) ||
-        departamento.includes(filtroLower)
+        ubicacionTexto.includes(filtroLower)
       );
     });
   };
 
-  const ordenesActivas = filtrarOrdenes(data.filter((o) => o.estado === "ACTIVO"));
-  const ordenesCulminadas = filtrarOrdenes(data.filter((o) => o.estado === "CULMINADO"));
+  const ordenesActivas = useMemo(
+    () => filtrarOrdenes(data.filter((o) => o.estado === "ACTIVO")),
+    [data, filtro]
+  );
+  const ordenesCulminadas = useMemo(
+    () => filtrarOrdenes(data.filter((o) => o.estado === "CULMINADO")),
+    [data, filtro]
+  );
 
   const TablaOrdenes = ({ ordenes }) => (
     <Table>
       <thead>
         <tr>
           <Th>Nombre</Th>
-          <Th>Departamento</Th>
+          <Th>Departamento / Dispositivo</Th>
           <Th>Descripción</Th>
           <Th>Estado</Th>
           <Th>Fecha</Th>
@@ -56,17 +88,13 @@ export default function ListaOrdenesServicio() {
       </thead>
       <tbody>
         {ordenes.map((orden) => (
-          <tr key={orden.id ?? orden.nombre}>
+          <tr key={orden.id ?? `${orden.nombre}-${orden.fecha}`}>
             <Td>
               <LinkTo to={`/orden-servicio/${orden.id}`}>{orden.nombre || "-"}</LinkTo>
             </Td>
-            <Td>
-              {orden.departamento_id
-                ? `${orden.departamento_numero} - Piso ${orden.departamento_piso}`
-                : "Sin departamento"}
-            </Td>
+            <Td title={getUbicacionTexto(orden)}>{getUbicacionTexto(orden)}</Td>
             <Td>{orden.descripcion || "-"}</Td>
-            <Td>{orden.estado}</Td>
+            <Td>{orden.estado || "-"}</Td>
             <Td>{orden.fecha || "-"}</Td>
           </tr>
         ))}
@@ -80,7 +108,7 @@ export default function ListaOrdenesServicio() {
 
       <SearchInput
         type="text"
-        placeholder="Buscar por nombre, fecha o departamento..."
+        placeholder="Buscar por nombre, fecha, departamento, marca o patente..."
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
       />
@@ -114,7 +142,7 @@ export default function ListaOrdenesServicio() {
   );
 }
 
-// Styled Components
+/* ========== Styled Components ========== */
 const Container = styled.div`
   max-width: 1100px;
   margin: 40px auto;
@@ -140,7 +168,7 @@ const SubTitle = styled.p`
 
 const SearchInput = styled.input`
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
   display: block;
   margin: 0 auto 30px;
   padding: 10px;
@@ -201,4 +229,3 @@ const BackLink = styled(Link)`
     text-decoration: underline;
   }
 `;
-

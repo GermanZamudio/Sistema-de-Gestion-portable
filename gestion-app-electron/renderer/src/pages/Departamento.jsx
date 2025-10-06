@@ -189,7 +189,7 @@ export default function Departamento() {
       </Section>
 
       <Section>
-        <SectionTitle>Historial de Trabajos</SectionTitle>
+        <SectionTitle>Historial de Ordenes</SectionTitle>
         {ordenes.length > 0 ? (
           <Table>
             <THead>

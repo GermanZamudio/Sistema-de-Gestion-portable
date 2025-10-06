@@ -57,7 +57,7 @@ export default function EdificiosDepartamentos() {
 
   return (
     <Container>
-      <Title>Edificios y Departamentos</Title>
+      <Title>Dependencias / Edificios y Departamentos</Title>
       {error && <ErrorText>{error}</ErrorText>}
 
       <HeaderRow>
@@ -69,8 +69,9 @@ export default function EdificiosDepartamentos() {
         {Object.entries(data).map(([edificio, obj]) => (
           <BuildingCard key={edificio}>
             <BuildingLeft>
-              <BuildingName>{edificio}</BuildingName>
+              <BuildingName>{edificio}</BuildingName><button>PDF</button>
               <BuildingAddress>{obj.direccion}</BuildingAddress>
+              
 
               <ToggleButton onClick={() => toggleExpand(edificio)}>
                 {expandedBuildings[edificio] ? <>Departamentos <ArrowDown>▾</ArrowDown></> 

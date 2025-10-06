@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/db');
 const { insertRecord,getRecordById } = require('../helpers/queries.js'); 
+const { articulo } = require('../helpers/format_table.js');
 
 
 
@@ -85,9 +86,12 @@ router.post('/form_orden_servicio',async (req,res)=>{
 
 
     for (const item of articulos_asignados) {
-      const result = getRecordById('existencia',item.articulo_id)
-      const stockDisponible = result ? result.cantidad : 0;
-
+      const existencia_articulo=db.prepare(`SELECT e.cantidad 
+                                      FROM existencia e
+                                      JOIN articulo a ON a.id = e.articulo_asociado_id
+                                      WHERE a.id=?`).get(item.articulo_id)
+      const stockDisponible = existencia_articulo ? existencia_articulo.cantidad : 0;
+      console.log("El id: ",item.articulo_id," tiene la siguiente cantidad: ",stockDisponible)
       if (stockDisponible < item.cantidad_asignada) {
         return res.status(400).json({
           error: `Stock insuficiente para el artículo con ID ${item.articulo_id}. Disponible: ${stockDisponible}, solicitado: ${item.cantidad_asignada}`

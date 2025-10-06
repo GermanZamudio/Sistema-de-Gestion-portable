@@ -14,6 +14,7 @@ import PrestamoStock from './pages/Prestamo';
 import ListaPrestamo from './pages/ListaPrestamo';
 import DetallePrestamo from './pages/DetallePrestamo';
 
+import Sobrantes from './pages/Sobrantes';
 
 import ListaOrdenCompra from './pages/ListaOrdenCompra';
 import OrdenCompra from './pages/OrdenCompra';
@@ -65,6 +66,8 @@ function App() {
           <Route path="/prestamo" element={<PrestamoStock />} />
           <Route path="/lista-prestamo" element={<ListaPrestamo />} />
           <Route path="/detalle-prestamo/:id" element={<DetallePrestamo />} />
+
+          <Route path="/sobrantes" element={<Sobrantes />} />
 
           <Route path="/movimientos/" element={<Movimientos />} />
 
