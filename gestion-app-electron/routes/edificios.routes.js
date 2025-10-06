@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/db');
 const { getRecordById } = require('../helpers/queries.js'); 
+const TABLE_AI = "articulo_identificado"; // o "articulos_identificados"
 
-router.get('/', (req, res) => {
+
+router.get("/", (req, res) => {
   try {
     const datos = db.prepare(`
       SELECT
@@ -33,7 +35,7 @@ router.get('/', (req, res) => {
 
       let imagenBase64 = null;
       if (imagen) {
-        imagenBase64 = `data:image/jpeg;base64,${Buffer.from(imagen).toString('base64')}`;
+        imagenBase64 = `data:image/jpeg;base64,${Buffer.from(imagen).toString("base64")}`;
       }
 
       if (!agrupado[edificio_nombre]) {
@@ -56,10 +58,122 @@ router.get('/', (req, res) => {
     }
 
     res.json(agrupado);
-
   } catch (err) {
     console.log(err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/:id/articulos-identificados", (req, res) => {
+  try {
+    const raw = req.params.id;
+    const isNumeric = /^\d+$/.test(raw);
+    const maybeName = isNumeric ? null : decodeURIComponent(raw);
+
+    // Buscar edificio por id o por nombre (case-insensitive) excluyendo VEHICULO
+    let edificio = null;
+    if (isNumeric) {
+      edificio = db
+        .prepare(
+          `SELECT id, nombre
+           FROM edificio
+           WHERE id = ? AND nombre != 'VEHICULO'`
+        )
+        .get(Number(raw));
+    } else {
+      edificio = db
+        .prepare(
+          `SELECT id, nombre
+           FROM edificio
+           WHERE TRIM(UPPER(nombre)) = TRIM(UPPER(?)) AND nombre != 'VEHICULO'`
+        )
+        .get(maybeName);
+    }
+
+    if (!edificio) {
+      return res.status(404).json({ error: "Edificio no encontrado" });
+    }
+
+    // Filtro de estado de la ASIGNACIÓN (tabla articulos_identificados_asignados)
+    // Por defecto: ASIGNADO y ENTREGADO
+    const estadoParam = (req.query.estado || "ASIGNADO,ENTREGADO")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean);
+    // Sanitizar a valores válidos
+    const estadosValidos = new Set(["ASIGNADO", "ENTREGADO"]);
+    const estados = estadoParam.filter((e) => estadosValidos.has(e));
+    const placeholdersEstados = estados.map(() => "?").join(",");
+
+    // CTE: última asignación por cada articulo_identificado (en toda la BD)
+    // Luego filtramos solo aquellas cuya última OS pertenece al edificio consultado.
+    const sql = `
+      WITH ultima_asignacion AS (
+        SELECT
+          articulo_identificado_id,
+          MAX(id) AS last_aia_id
+        FROM articulos_identificados_asignados
+        GROUP BY articulo_identificado_id
+      )
+      SELECT
+        ai.id                    AS ai_id,
+        ai.codigo                AS ai_codigo,
+        ai.estado                AS ai_estado,
+        a.nombre                 AS articulo_nombre,
+        a.codigo                 AS articulo_codigo,
+        d.id                     AS dep_id,
+        d.numero                 AS dep_numero,
+        d.piso                   AS dep_piso,
+        os.id                    AS orden_id,
+        os.nombre                AS orden_nombre,
+        os.fecha                 AS orden_fecha,
+        aia.estado               AS asignacion_estado
+      FROM ultima_asignacion ua
+      JOIN articulos_identificados_asignados aia
+        ON aia.id = ua.last_aia_id
+      JOIN articulo_identificado ai
+        ON ai.id = ua.articulo_identificado_id
+      LEFT JOIN articulo a
+        ON a.id = ai.id_articulo
+      JOIN orden_servicio os
+        ON os.id = aia.orden_servicio_id
+      JOIN departamento d
+        ON d.id = os.departamento_id
+      WHERE
+        d.edificio_id = ?
+        AND ai.estado != 'BAJA'
+        AND aia.estado IN (${placeholdersEstados})
+      ORDER BY d.piso, d.numero, a.nombre, ai.codigo
+    `;
+
+    const params = [edificio.id, ...estados];
+    const rows = db.prepare(sql).all(...params);
+
+    const articulos = rows.map((r) => ({
+      id: r.ai_id,
+      codigo: r.ai_codigo,
+      nombre: r.articulo_nombre ?? "(sin nombre)",
+      departamento: {
+        id: r.dep_id,
+        codigo: String(r.dep_numero ?? ""),
+        nombre: `Piso ${r.dep_piso ?? "-"} • Depto ${r.dep_numero ?? "-"}`,
+        piso: r.dep_piso,
+      },
+      orden: {
+        id: r.orden_id,
+        nombre: r.orden_nombre,
+        fecha: r.orden_fecha,
+        estado_asignacion: r.asignacion_estado,
+      },
+    }));
+
+    res.json({
+      edificio: { id: edificio.id, nombre: edificio.nombre },
+      articulos,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "No se pudo obtener artículos identificados asignados" });
   }
 });
 

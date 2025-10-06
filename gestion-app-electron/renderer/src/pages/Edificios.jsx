@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import Modal from "../components/Modals/CreateAuxiliares";
+import { generatePDF } from "../utils/pdf"; // 
 
 export default function EdificiosDepartamentos() {
   const [error, setError] = useState("");
@@ -13,6 +14,7 @@ export default function EdificiosDepartamentos() {
   const [modalUrl, setModalUrl] = useState("");
   const [camposAuto, setCamposAuto] = useState({});
   const [camposIgnorados, setCamposIgnorados] = useState([]);
+  const [busyId, setBusyId] = useState(null); // <-- agregado
 
   useEffect(() => {
     async function fetchData() {
@@ -55,6 +57,45 @@ export default function EdificiosDepartamentos() {
     window.location.reload();
   };
 
+  // --- agregado: handler para PDF ---
+  const onPdf = async (edificioNombre, edificioObj) => {
+    try {
+      // Intentamos usar un id si existe; si no, usamos el nombre como identificador (coordinamos el backend luego)
+      const buildingId = edificioObj?.id ?? encodeURIComponent(edificioNombre);
+
+      setBusyId(buildingId);
+      const r = await window.api.get(`/api/edificios/${buildingId}/articulos-identificados`);
+      if (r?.error) throw new Error(r.error);
+
+      const articulos = r?.articulos || [];
+
+      const head = ["Código", "Artículo", "Depto", "Departamento"];
+      const rows = articulos.map((a) => [
+        a?.codigo ?? "-",
+        a?.nombre ?? "-",
+        a?.departamento?.codigo ?? "-",
+        a?.departamento?.nombre ?? "-",
+      ]);
+
+      await generatePDF({
+        title: `Edificio: ${edificioNombre}`,
+        subtitle: "Artículos identificados por departamento",
+        head,
+        rows,
+        footer: (page, total) => `Página ${page} de ${total}`,
+        filename: `Edificio_${(edificioNombre || "Edificio")
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "_")}_identificados.pdf`,
+      });
+    } catch (e) {
+      console.error(e);
+      alert("No se pudo generar el PDF");
+    } finally {
+      setBusyId(null);
+    }
+  };
+  // --- fin agregado ---
+
   return (
     <Container>
       <Title>Dependencias / Edificios y Departamentos</Title>
@@ -69,13 +110,31 @@ export default function EdificiosDepartamentos() {
         {Object.entries(data).map(([edificio, obj]) => (
           <BuildingCard key={edificio}>
             <BuildingLeft>
-              <BuildingName>{edificio}</BuildingName><button>PDF</button>
+              <BuildingName>{edificio}</BuildingName>
               <BuildingAddress>{obj.direccion}</BuildingAddress>
-              
+
+              {/* --- agregado: botón PDF por edificio --- */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                <SmallButton
+                  onClick={() => onPdf(edificio, obj)}
+                  disabled={busyId === (obj?.id ?? encodeURIComponent(edificio))}
+                  title="Exportar PDF de artículos identificados asignados a este edificio"
+                >
+                  {busyId === (obj?.id ?? encodeURIComponent(edificio)) ? "Generando…" : "PDF: Identificados"}
+                </SmallButton>
+              </div>
+              {/* --- fin agregado --- */}
 
               <ToggleButton onClick={() => toggleExpand(edificio)}>
-                {expandedBuildings[edificio] ? <>Departamentos <ArrowDown>▾</ArrowDown></> 
-                                            : <>Departamentos <ArrowRight>▸</ArrowRight></>}
+                {expandedBuildings[edificio] ? (
+                  <>
+                    Departamentos <ArrowDown>▾</ArrowDown>
+                  </>
+                ) : (
+                  <>
+                    Departamentos <ArrowRight>▸</ArrowRight>
+                  </>
+                )}
               </ToggleButton>
 
               {expandedBuildings[edificio] && (
@@ -83,8 +142,15 @@ export default function EdificiosDepartamentos() {
                   {Object.entries(obj.pisos).map(([piso, departamentos]) => (
                     <FloorSection key={piso}>
                       <FloorButton onClick={() => toggleFloor(edificio, piso)}>
-                        {expandedFloors[`${edificio}-${piso}`] ? <>Piso {piso} <ArrowDown>▾</ArrowDown></> 
-                                                                : <>Piso {piso} <ArrowRight>▸</ArrowRight></>}
+                        {expandedFloors[`${edificio}-${piso}`] ? (
+                          <>
+                            Piso {piso} <ArrowDown>▾</ArrowDown>
+                          </>
+                        ) : (
+                          <>
+                            Piso {piso} <ArrowRight>▸</ArrowRight>
+                          </>
+                        )}
                       </FloorButton>
 
                       {expandedFloors[`${edificio}-${piso}`] && (
@@ -103,8 +169,11 @@ export default function EdificiosDepartamentos() {
             </BuildingLeft>
 
             <BuildingRight>
-              {obj.imagen ? <BuildingImage src={obj.imagen} alt={`Imagen de ${edificio}`} /> 
-                         : <NoImageText>(Sin imagen disponible)</NoImageText>}
+              {obj.imagen ? (
+                <BuildingImage src={obj.imagen} alt={`Imagen de ${edificio}`} />
+              ) : (
+                <NoImageText>(Sin imagen disponible)</NoImageText>
+              )}
             </BuildingRight>
           </BuildingCard>
         ))}
@@ -334,4 +403,27 @@ const ArrowDown = styled.span`
   font-weight: 700;
   font-size: 1rem;
   color: #3b82f6;
+`;
+
+// --- agregado: botón pequeño consistente con tu estilo ---
+const SmallButton = styled.button`
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.25s ease, color 0.25s ease;
+
+  &:hover {
+    background: #f9fafb;
+    color: #111827;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 `;
