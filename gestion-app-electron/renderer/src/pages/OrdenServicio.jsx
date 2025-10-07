@@ -450,7 +450,7 @@ const ImagenOrden = styled.img`
 `;
 
 const Titulo = styled.h1`
-  font-size: 20px;
+  font-size: 1.5rem;
   text-align: center;
   margin-bottom: 10px;
 `;

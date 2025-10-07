@@ -128,10 +128,11 @@ const Container = styled.div`
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 `;
 
-const Title = styled.h1`
+const Title = styled.p`
   text-align: center;
   margin-bottom: 20px;
   color: #2c3e50;
+  font-size: 1.5rem;
 `;
 
 const SearchInput = styled.input`
@@ -149,7 +150,8 @@ const SearchInput = styled.input`
   }
 `;
 
-const SubTitle = styled.h2`
+const SubTitle = styled.p`
+  font-size: 1.2rem;
   margin-top: 40px;
   margin-bottom: 20px;
   color: #2c3e50;

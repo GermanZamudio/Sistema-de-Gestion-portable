@@ -24,7 +24,7 @@ const CreateButton = styled.button`
 `;
 
 const Title = styled.p`
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   margin-bottom: 1.2rem;
 `;
 

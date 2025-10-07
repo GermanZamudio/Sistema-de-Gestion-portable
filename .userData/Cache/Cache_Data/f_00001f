@@ -1,0 +1,426 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/NavBar.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=324a4e66"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+var _s = $RefreshSig$();
+import __vite__cjsImport3_react from "/node_modules/.vite/deps/react.js?v=324a4e66"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useState = __vite__cjsImport3_react["useState"]; const useContext = __vite__cjsImport3_react["useContext"];
+import { NavLink } from "/node_modules/.vite/deps/react-router-dom.js?v=324a4e66";
+import styled from "/node_modules/.vite/deps/styled-components.js?v=324a4e66";
+import { NavbarContext } from "/src/context/NavbarContext.jsx";
+import {
+  FaBoxOpen,
+  FaWarehouse,
+  FaTools,
+  FaHandHolding,
+  FaListAlt,
+  FaCouch,
+  FaBoxes,
+  FaPlusCircle,
+  FaClipboardList,
+  FaFileAlt,
+  FaFileMedical,
+  FaTags,
+  FaBuilding,
+  FaTable,
+  FaChevronLeft,
+  FaChevronRight,
+  FaCar,
+  FaFileContract,
+  FaArchive
+} from "/node_modules/.vite/deps/react-icons_fa.js?v=324a4e66";
+const NotebookIcon = () => /* @__PURE__ */ jsxDEV("svg", { width: "24", height: "24", fill: "currentColor", viewBox: "0 0 24 24", style: { marginRight: "8px" }, children: /* @__PURE__ */ jsxDEV("path", { d: "M19 2H9a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 18H9V4h10v16zM7 6H5v12h2V6z" }, void 0, false, {
+  fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+  lineNumber: 49,
+  columnNumber: 5
+}, this) }, void 0, false, {
+  fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+  lineNumber: 48,
+  columnNumber: 1
+}, this);
+_c = NotebookIcon;
+export default function NavBar() {
+  _s();
+  const { isOpen, toggleNavbar } = useContext(NavbarContext);
+  const [collapsed, setCollapsed] = useState(false);
+  const toggleCollapse = () => setCollapsed(!collapsed);
+  return /* @__PURE__ */ jsxDEV(Sidebar, { collapsed, children: [
+    /* @__PURE__ */ jsxDEV(Brand, { collapsed, children: [
+      !collapsed && /* @__PURE__ */ jsxDEV(NotebookIcon, {}, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 62,
+        columnNumber: 24
+      }, this),
+      !collapsed && /* @__PURE__ */ jsxDEV("span", { children: "Dep-Arq" }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 63,
+        columnNumber: 24
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+      lineNumber: 61,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(CollapseBtn, { onClick: toggleCollapse, children: collapsed ? /* @__PURE__ */ jsxDEV(FaChevronRight, {}, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+      lineNumber: 66,
+      columnNumber: 22
+    }, this) : /* @__PURE__ */ jsxDEV(FaChevronLeft, {}, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+      lineNumber: 66,
+      columnNumber: 43
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+      lineNumber: 65,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(Menu, { children: [
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaWarehouse, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 69,
+          columnNumber: 50
+        }, this),
+        " ",
+        !collapsed && "Home"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 69,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/stock", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaBoxOpen, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 70,
+          columnNumber: 55
+        }, this),
+        " ",
+        !collapsed && "Stock"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 70,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/herramientas", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaTools, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 71,
+          columnNumber: 62
+        }, this),
+        " ",
+        !collapsed && "Herramientas"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 71,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/prestamo", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaHandHolding, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 72,
+          columnNumber: 58
+        }, this),
+        " ",
+        !collapsed && "Prestar"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 72,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/lista-prestamo", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaListAlt, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 73,
+          columnNumber: 64
+        }, this),
+        " ",
+        !collapsed && "Préstamos"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 73,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/bienes-uso", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaCouch, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 74,
+          columnNumber: 60
+        }, this),
+        " ",
+        !collapsed && "Bienes de Uso"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 74,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/bienes-consumo", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaBoxes, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 75,
+          columnNumber: 64
+        }, this),
+        " ",
+        !collapsed && "Bienes de Consumo"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 75,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/crear-compra", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaPlusCircle, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 76,
+          columnNumber: 62
+        }, this),
+        " ",
+        !collapsed && "Crear Compra"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 76,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/lista-orden-compra", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaClipboardList, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 77,
+          columnNumber: 68
+        }, this),
+        " ",
+        !collapsed && "Órdenes Compra"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 77,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/crear-orden-servicio", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaFileMedical, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 78,
+          columnNumber: 70
+        }, this),
+        " ",
+        !collapsed && "Nueva Orden Servicio"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 78,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/lista-ordenes-servicio", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaFileAlt, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 79,
+          columnNumber: 72
+        }, this),
+        " ",
+        !collapsed && "Órdenes Servicio"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 79,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/articulos", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaTags, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 80,
+          columnNumber: 59
+        }, this),
+        " ",
+        !collapsed && "Artículos"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 80,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/edificios", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaBuilding, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 81,
+          columnNumber: 59
+        }, this),
+        " ",
+        !collapsed && "Edificios"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 81,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/vehiculos", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaCar, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 82,
+          columnNumber: 59
+        }, this),
+        " ",
+        !collapsed && "Vehículos"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 82,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/sobrantes", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaArchive, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 83,
+          columnNumber: 59
+        }, this),
+        " ",
+        !collapsed && "Sobrantes"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 83,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/movimientos", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaFileContract, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 84,
+          columnNumber: 61
+        }, this),
+        " ",
+        !collapsed && "Movimientos"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 84,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV(StyledLink, { to: "/tablas-auxiliares", collapsed, children: [
+        /* @__PURE__ */ jsxDEV(FaTable, {}, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+          lineNumber: 85,
+          columnNumber: 67
+        }, this),
+        " ",
+        !collapsed && "Tablas Auxiliares"
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+        lineNumber: 85,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+      lineNumber: 68,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx",
+    lineNumber: 60,
+    columnNumber: 5
+  }, this);
+}
+_s(NavBar, "0CnbQcYAzHbRaYPFwTLcMx3H+gY=");
+_c2 = NavBar;
+const Sidebar = styled.nav`
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: ${({ collapsed }) => collapsed ? "60px" : "220px"};
+  height: 100vh;
+  background-color: #0d1117;
+  border-right: 1px solid #30363d;
+  color: #c9d1d9;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  z-index: 1000;
+`;
+_c3 = Sidebar;
+const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  font-family: 'SF Mono', Consolas, monospace;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #58a6ff;
+  user-select: none;
+  justify-content: ${({ collapsed }) => collapsed ? "center" : "flex-start"};
+
+  span {
+    margin-left: 8px;
+  }
+`;
+_c4 = Brand;
+const Menu = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+`;
+_c5 = Menu;
+const StyledLink = styled(NavLink)`
+  color: #c9d1d9;
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: ${({ collapsed }) => collapsed ? "0" : "12px"};
+  justify-content: ${({ collapsed }) => collapsed ? "center" : "flex-start"};
+  transition: background 0.2s ease;
+
+  svg {
+    font-size: 1.1rem;
+  }
+
+  &:hover {
+    background-color: #21262d;
+  }
+
+  &.active {
+    background-color: #30363d;
+    color: #58a6ff;
+  }
+`;
+_c6 = StyledLink;
+const CollapseBtn = styled.button`
+  background: none;
+  border: none;
+  color: #c9d1d9;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: auto;
+  align-self: center;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    color: #58a6ff;
+  }
+`;
+_c7 = CollapseBtn;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7;
+$RefreshReg$(_c, "NotebookIcon");
+$RefreshReg$(_c2, "NavBar");
+$RefreshReg$(_c3, "Sidebar");
+$RefreshReg$(_c4, "Brand");
+$RefreshReg$(_c5, "Menu");
+$RefreshReg$(_c6, "StyledLink");
+$RefreshReg$(_c7, "CollapseBtn");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/components/NavBar.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,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SUFBQVEsS0FBQUcsS0FBQUcsS0FBQUUsS0FBQUUsS0FBQUc7QUFBQUMsYUFBQXRCLElBQUE7QUFBQXNCLGFBQUFkLEtBQUE7QUFBQWMsYUFBQVgsS0FBQTtBQUFBVyxhQUFBUixLQUFBO0FBQUFRLGFBQUFOLEtBQUE7QUFBQU0sYUFBQUosS0FBQTtBQUFBSSxhQUFBRCxLQUFBIiwibmFtZXMiOlsiUmVhY3QiLCJ1c2VTdGF0ZSIsInVzZUNvbnRleHQiLCJOYXZMaW5rIiwic3R5bGVkIiwiTmF2YmFyQ29udGV4dCIsIkZhQm94T3BlbiIsIkZhV2FyZWhvdXNlIiwiRmFUb29scyIsIkZhSGFuZEhvbGRpbmciLCJGYUxpc3RBbHQiLCJGYUNvdWNoIiwiRmFCb3hlcyIsIkZhUGx1c0NpcmNsZSIsIkZhQ2xpcGJvYXJkTGlzdCIsIkZhRmlsZUFsdCIsIkZhRmlsZU1lZGljYWwiLCJGYVRhZ3MiLCJGYUJ1aWxkaW5nIiwiRmFUYWJsZSIsIkZhQ2hldnJvbkxlZnQiLCJGYUNoZXZyb25SaWdodCIsIkZhQ2FyIiwiRmFGaWxlQ29udHJhY3QiLCJGYUFyY2hpdmUiLCJOb3RlYm9va0ljb24iLCJtYXJnaW5SaWdodCIsIl9jIiwiTmF2QmFyIiwiX3MiLCJpc09wZW4iLCJ0b2dnbGVOYXZiYXIiLCJjb2xsYXBzZWQiLCJzZXRDb2xsYXBzZWQiLCJ0b2dnbGVDb2xsYXBzZSIsIl9jMiIsIlNpZGViYXIiLCJuYXYiLCJfYzMiLCJCcmFuZCIsImRpdiIsIl9jNCIsIk1lbnUiLCJfYzUiLCJTdHlsZWRMaW5rIiwiX2M2IiwiQ29sbGFwc2VCdG4iLCJidXR0b24iLCJfYzciLCIkUmVmcmVzaFJlZyQiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiTmF2QmFyLmpzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgUmVhY3QsIHsgdXNlU3RhdGUsIHVzZUNvbnRleHQgfSBmcm9tICdyZWFjdCc7XHJcbmltcG9ydCB7IE5hdkxpbmsgfSBmcm9tICdyZWFjdC1yb3V0ZXItZG9tJztcclxuaW1wb3J0IHN0eWxlZCBmcm9tICdzdHlsZWQtY29tcG9uZW50cyc7XHJcbmltcG9ydCB7IE5hdmJhckNvbnRleHQgfSBmcm9tICcuLi9jb250ZXh0L05hdmJhckNvbnRleHQnO1xyXG5pbXBvcnQgeyBcclxuICBGYUJveE9wZW4sXHJcbiAgRmFXYXJlaG91c2UsXHJcbiAgRmFUb29scyxcclxuICBGYUhhbmRIb2xkaW5nLFxyXG4gIEZhTGlzdEFsdCxcclxuICBGYUNvdWNoLFxyXG4gIEZhQm94ZXMsXHJcbiAgRmFQbHVzQ2lyY2xlLFxyXG4gIEZhQ2xpcGJvYXJkTGlzdCxcclxuICBGYUZpbGVBbHQsXHJcbiAgRmFGaWxlTWVkaWNhbCxcclxuICBGYVRhZ3MsXHJcbiAgRmFCdWlsZGluZyxcclxuICBGYVRhYmxlLFxyXG4gIEZhQ2hldnJvbkxlZnQsXHJcbiAgRmFDaGV2cm9uUmlnaHQsXHJcbiAgRmFDYXIsXHJcbiAgRmFGaWxlQ29udHJhY3QsXHJcbiAgRmFBcmNoaXZlICAgICAgICAgICAgIC8vIPCfkYggTlVFVk86IMOtY29ubyBwYXJhIFNvYnJhbnRlc1xyXG59IGZyb20gXCJyZWFjdC1pY29ucy9mYVwiO1xyXG5cclxuLy8gw41jb25vIGRlIG1hcmNhXHJcbmNvbnN0IE5vdGVib29rSWNvbiA9ICgpID0+IChcclxuICA8c3ZnIHdpZHRoPVwiMjRcIiBoZWlnaHQ9XCIyNFwiIGZpbGw9XCJjdXJyZW50Q29sb3JcIiB2aWV3Qm94PVwiMCAwIDI0IDI0XCIgc3R5bGU9e3sgbWFyZ2luUmlnaHQ6ICc4cHgnIH19PlxyXG4gICAgPHBhdGggZD1cIk0xOSAySDlhMiAyIDAgMCAwLTIgMnYxNmEyIDIgMCAwIDAgMiAyaDEwYTIgMiAwIDAgMCAyLTJWNGEyIDIgMCAwIDAtMi0yem0wIDE4SDlWNGgxMHYxNnpNNyA2SDV2MTJoMlY2elwiIC8+XHJcbiAgPC9zdmc+XHJcbik7XHJcblxyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBOYXZCYXIoKSB7XHJcbiAgY29uc3QgeyBpc09wZW4sIHRvZ2dsZU5hdmJhciB9ID0gdXNlQ29udGV4dChOYXZiYXJDb250ZXh0KTtcclxuICBjb25zdCBbY29sbGFwc2VkLCBzZXRDb2xsYXBzZWRdID0gdXNlU3RhdGUoZmFsc2UpO1xyXG5cclxuICBjb25zdCB0b2dnbGVDb2xsYXBzZSA9ICgpID0+IHNldENvbGxhcHNlZCghY29sbGFwc2VkKTtcclxuXHJcbiAgcmV0dXJuIChcclxuICAgIDxTaWRlYmFyIGNvbGxhcHNlZD17Y29sbGFwc2VkfT5cclxuICAgICAgPEJyYW5kIGNvbGxhcHNlZD17Y29sbGFwc2VkfT5cclxuICAgICAgICB7IWNvbGxhcHNlZCAmJiA8Tm90ZWJvb2tJY29uIC8+fVxyXG4gICAgICAgIHshY29sbGFwc2VkICYmIDxzcGFuPkRlcC1BcnE8L3NwYW4+fVxyXG4gICAgICA8L0JyYW5kPlxyXG4gICAgICA8Q29sbGFwc2VCdG4gb25DbGljaz17dG9nZ2xlQ29sbGFwc2V9PlxyXG4gICAgICAgIHtjb2xsYXBzZWQgPyA8RmFDaGV2cm9uUmlnaHQgLz4gOiA8RmFDaGV2cm9uTGVmdCAvPn1cclxuICAgICAgPC9Db2xsYXBzZUJ0bj5cclxuICAgICAgPE1lbnU+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvXCIgY29sbGFwc2VkPXtjb2xsYXBzZWR9PjxGYVdhcmVob3VzZS8+IHshY29sbGFwc2VkICYmICdIb21lJ308L1N0eWxlZExpbms+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvc3RvY2tcIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhQm94T3BlbiAvPiB7IWNvbGxhcHNlZCAmJiAnU3RvY2snfTwvU3R5bGVkTGluaz5cclxuICAgICAgICA8U3R5bGVkTGluayB0bz1cIi9oZXJyYW1pZW50YXNcIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhVG9vbHMgLz4geyFjb2xsYXBzZWQgJiYgJ0hlcnJhbWllbnRhcyd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL3ByZXN0YW1vXCIgY29sbGFwc2VkPXtjb2xsYXBzZWR9PjxGYUhhbmRIb2xkaW5nIC8+IHshY29sbGFwc2VkICYmICdQcmVzdGFyJ308L1N0eWxlZExpbms+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvbGlzdGEtcHJlc3RhbW9cIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhTGlzdEFsdCAvPiB7IWNvbGxhcHNlZCAmJiAnUHLDqXN0YW1vcyd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL2JpZW5lcy11c29cIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhQ291Y2ggLz4geyFjb2xsYXBzZWQgJiYgJ0JpZW5lcyBkZSBVc28nfTwvU3R5bGVkTGluaz5cclxuICAgICAgICA8U3R5bGVkTGluayB0bz1cIi9iaWVuZXMtY29uc3Vtb1wiIGNvbGxhcHNlZD17Y29sbGFwc2VkfT48RmFCb3hlcyAvPiB7IWNvbGxhcHNlZCAmJiAnQmllbmVzIGRlIENvbnN1bW8nfTwvU3R5bGVkTGluaz5cclxuICAgICAgICA8U3R5bGVkTGluayB0bz1cIi9jcmVhci1jb21wcmFcIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhUGx1c0NpcmNsZSAvPiB7IWNvbGxhcHNlZCAmJiAnQ3JlYXIgQ29tcHJhJ308L1N0eWxlZExpbms+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvbGlzdGEtb3JkZW4tY29tcHJhXCIgY29sbGFwc2VkPXtjb2xsYXBzZWR9PjxGYUNsaXBib2FyZExpc3QgLz4geyFjb2xsYXBzZWQgJiYgJ8OTcmRlbmVzIENvbXByYSd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL2NyZWFyLW9yZGVuLXNlcnZpY2lvXCIgY29sbGFwc2VkPXtjb2xsYXBzZWR9PjxGYUZpbGVNZWRpY2FsIC8+IHshY29sbGFwc2VkICYmICdOdWV2YSBPcmRlbiBTZXJ2aWNpbyd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL2xpc3RhLW9yZGVuZXMtc2VydmljaW9cIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhRmlsZUFsdCAvPiB7IWNvbGxhcHNlZCAmJiAnw5NyZGVuZXMgU2VydmljaW8nfTwvU3R5bGVkTGluaz5cclxuICAgICAgICA8U3R5bGVkTGluayB0bz1cIi9hcnRpY3Vsb3NcIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhVGFncyAvPiB7IWNvbGxhcHNlZCAmJiAnQXJ0w61jdWxvcyd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL2VkaWZpY2lvc1wiIGNvbGxhcHNlZD17Y29sbGFwc2VkfT48RmFCdWlsZGluZyAvPiB7IWNvbGxhcHNlZCAmJiAnRWRpZmljaW9zJ308L1N0eWxlZExpbms+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvdmVoaWN1bG9zXCIgY29sbGFwc2VkPXtjb2xsYXBzZWR9PjxGYUNhciAvPiB7IWNvbGxhcHNlZCAmJiAnVmVow61jdWxvcyd9PC9TdHlsZWRMaW5rPlxyXG4gICAgICAgIDxTdHlsZWRMaW5rIHRvPVwiL3NvYnJhbnRlc1wiIGNvbGxhcHNlZD17Y29sbGFwc2VkfT48RmFBcmNoaXZlIC8+IHshY29sbGFwc2VkICYmICdTb2JyYW50ZXMnfTwvU3R5bGVkTGluaz5cclxuICAgICAgICA8U3R5bGVkTGluayB0bz1cIi9tb3ZpbWllbnRvc1wiIGNvbGxhcHNlZD17Y29sbGFwc2VkfT48RmFGaWxlQ29udHJhY3QgLz4geyFjb2xsYXBzZWQgJiYgJ01vdmltaWVudG9zJ308L1N0eWxlZExpbms+XHJcbiAgICAgICAgPFN0eWxlZExpbmsgdG89XCIvdGFibGFzLWF1eGlsaWFyZXNcIiBjb2xsYXBzZWQ9e2NvbGxhcHNlZH0+PEZhVGFibGUgLz4geyFjb2xsYXBzZWQgJiYgJ1RhYmxhcyBBdXhpbGlhcmVzJ308L1N0eWxlZExpbms+XHJcbiAgICAgIDwvTWVudT5cclxuICAgIDwvU2lkZWJhcj5cclxuICApO1xyXG59XHJcblxyXG4vLyAtLS0gRXN0aWxvcyAtLS1cclxuXHJcbmNvbnN0IFNpZGViYXIgPSBzdHlsZWQubmF2YFxyXG4gIHBvc2l0aW9uOiBmaXhlZDtcclxuICBsZWZ0OiAwO1xyXG4gIHRvcDogMDtcclxuICB3aWR0aDogJHsoeyBjb2xsYXBzZWQgfSkgPT4gKGNvbGxhcHNlZCA/ICc2MHB4JyA6ICcyMjBweCcpfTtcclxuICBoZWlnaHQ6IDEwMHZoO1xyXG4gIGJhY2tncm91bmQtY29sb3I6ICMwZDExMTc7XHJcbiAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzMwMzYzZDtcclxuICBjb2xvcjogI2M5ZDFkOTtcclxuICBwYWRkaW5nOiAyMHB4IDEwcHg7XHJcbiAgZGlzcGxheTogZmxleDtcclxuICBmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xyXG4gIHRyYW5zaXRpb246IHdpZHRoIDAuM3MgZWFzZTtcclxuICB6LWluZGV4OiAxMDAwO1xyXG5gO1xyXG5cclxuY29uc3QgQnJhbmQgPSBzdHlsZWQuZGl2YFxyXG4gIGRpc3BsYXk6IGZsZXg7XHJcbiAgYWxpZ24taXRlbXM6IGNlbnRlcjtcclxuICBmb250LWZhbWlseTogJ1NGIE1vbm8nLCBDb25zb2xhcywgbW9ub3NwYWNlO1xyXG4gIGZvbnQtd2VpZ2h0OiBib2xkO1xyXG4gIGZvbnQtc2l6ZTogMS4ycmVtO1xyXG4gIG1hcmdpbi1ib3R0b206IDMwcHg7XHJcbiAgY29sb3I6ICM1OGE2ZmY7XHJcbiAgdXNlci1zZWxlY3Q6IG5vbmU7XHJcbiAganVzdGlmeS1jb250ZW50OiAkeyh7IGNvbGxhcHNlZCB9KSA9PiAoY29sbGFwc2VkID8gJ2NlbnRlcicgOiAnZmxleC1zdGFydCcpfTtcclxuXHJcbiAgc3BhbiB7XHJcbiAgICBtYXJnaW4tbGVmdDogOHB4O1xyXG4gIH1cclxuYDtcclxuXHJcbmNvbnN0IE1lbnUgPSBzdHlsZWQuZGl2YFxyXG4gIGRpc3BsYXk6IGZsZXg7XHJcbiAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcclxuICBnYXA6IDdweDtcclxuICBmbGV4OiAxO1xyXG5gO1xyXG5cclxuY29uc3QgU3R5bGVkTGluayA9IHN0eWxlZChOYXZMaW5rKWBcclxuICBjb2xvcjogI2M5ZDFkOTtcclxuICB0ZXh0LWRlY29yYXRpb246IG5vbmU7XHJcbiAgZm9udC1zaXplOiAwLjhyZW07XHJcbiAgcGFkZGluZzogNHB4O1xyXG4gIGJvcmRlci1yYWRpdXM6IDZweDtcclxuICBkaXNwbGF5OiBmbGV4O1xyXG4gIGFsaWduLWl0ZW1zOiBjZW50ZXI7XHJcbiAgZ2FwOiAkeyh7IGNvbGxhcHNlZCB9KSA9PiAoY29sbGFwc2VkID8gJzAnIDogJzEycHgnKX07XHJcbiAganVzdGlmeS1jb250ZW50OiAkeyh7IGNvbGxhcHNlZCB9KSA9PiAoY29sbGFwc2VkID8gJ2NlbnRlcicgOiAnZmxleC1zdGFydCcpfTtcclxuICB0cmFuc2l0aW9uOiBiYWNrZ3JvdW5kIDAuMnMgZWFzZTtcclxuXHJcbiAgc3ZnIHtcclxuICAgIGZvbnQtc2l6ZTogMS4xcmVtO1xyXG4gIH1cclxuXHJcbiAgJjpob3ZlciB7XHJcbiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjEyNjJkO1xyXG4gIH1cclxuXHJcbiAgJi5hY3RpdmUge1xyXG4gICAgYmFja2dyb3VuZC1jb2xvcjogIzMwMzYzZDtcclxuICAgIGNvbG9yOiAjNThhNmZmO1xyXG4gIH1cclxuYDtcclxuXHJcbmNvbnN0IENvbGxhcHNlQnRuID0gc3R5bGVkLmJ1dHRvbmBcclxuICBiYWNrZ3JvdW5kOiBub25lO1xyXG4gIGJvcmRlcjogbm9uZTtcclxuICBjb2xvcjogI2M5ZDFkOTtcclxuICBmb250LXNpemU6IDFyZW07XHJcbiAgY3Vyc29yOiBwb2ludGVyO1xyXG4gIG1hcmdpbi10b3A6IGF1dG87XHJcbiAgYWxpZ24tc2VsZjogY2VudGVyO1xyXG4gIHRyYW5zaXRpb246IHRyYW5zZm9ybSAwLjNzIGVhc2U7XHJcblxyXG4gICY6aG92ZXIge1xyXG4gICAgY29sb3I6ICM1OGE2ZmY7XHJcbiAgfVxyXG5gO1xyXG5cclxuIl0sImZpbGUiOiJDOi9Vc2Vycy9HZXJtYS9PbmVEcml2ZS9Fc2NyaXRvcmlvL1Npc3RlbWEgZGUgR2VzdGlvbiBwb3J0YWJsZS9nZXN0aW9uLWFwcC1lbGVjdHJvbi9yZW5kZXJlci9zcmMvY29tcG9uZW50cy9OYXZCYXIuanN4In0=

@@ -10,9 +10,8 @@ const Container = styled.div`
 `;
 
 const Title = styled.p`
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   margin-bottom: 1.2rem;
-  font-weight: 600;
 `;
 
 const CreateButton = styled.button`

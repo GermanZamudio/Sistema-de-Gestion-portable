@@ -2,13 +2,12 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import {
-  FaBoxOpen
-} from "react-icons/fa";
+import { FaBoxOpen } from "react-icons/fa";
 
 const Home = () => {
   const [error, setError] = useState("");
   const [data, setData] = useState([]);
+  const [ordenes, setOrdenes] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -26,9 +25,6 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const PrestamosActivas = data.filter((orden) => orden.estado === "ACTIVO");
- const [ordenes, setOrdenes] = useState([]);
-
   useEffect(() => {
     async function fetchOrdenesCompra() {
       try {
@@ -45,18 +41,50 @@ const Home = () => {
     fetchOrdenesCompra();
   }, []);
 
-  const tienePendientes = (orden) => {
-    return orden.articulos.some(
-      (a) => a.cantidad_recibida < a.cantidad_pedida
-    );
-  };
+  const PrestamosActivas = data.filter((orden) => orden.estado === "ACTIVO");
+
+  const tienePendientes = (orden) =>
+    orden.articulos?.some((a) => a.cantidad_recibida < a.cantidad_pedida);
 
   const pendientes = ordenes.filter(tienePendientes);
+
+  // --- Handlers de backup ---
+  const handleBackupCreate = async () => {
+    try {
+      const r = await window.api.backupCreate(); // diálogo "Guardar como..."
+      if (r?.canceled) return;
+      if (r?.ok) alert(`Backup creado en:\n${r.path}`);
+      else alert(`No se pudo crear el backup.\n${r?.error || "Error desconocido"}`);
+    } catch (e) {
+      alert(`Error creando backup: ${e.message}`);
+    }
+  };
+
+  const handleImportBackup = async () => {
+    try {
+      const r = await window.api.importDB();
+      if (r?.canceled) return;
+      if (r?.ok) {
+        alert("Backup importado correctamente. Se recargará la aplicación.");
+        location.reload();
+      } else {
+        alert(`No se pudo importar el backup.\n${r?.error || "Error desconocido"}`);
+      }
+    } catch (e) {
+      alert(`Error importando backup: ${e.message}`);
+    }
+  };
 
   return (
     <Container>
       <Title>Panel de Gestión</Title>
-      <Subtitle>Secciones del Sistema</Subtitle>
+      <TopBar>
+        <Subtitle>Secciones del Sistema</Subtitle>
+        <Actions>
+          <ActionButton onClick={handleBackupCreate}>🗂 Crear backup</ActionButton>
+          <ActionButtonSecondary onClick={handleImportBackup}>⬇️ Importar backup</ActionButtonSecondary>
+        </Actions>
+      </TopBar>
 
       <TileGrid>
         <Tile to="/herramientas"><FaBoxOpen /><Label>Herramientas</Label></Tile>
@@ -83,15 +111,13 @@ const Home = () => {
               </TableHeader>
               <ScrollableTableBody>
                 {PrestamosActivas.map((orden) => (
-                  <LinkStyled to={`/detalle-prestamo/${orden.id}`}>
-                  <TableRow key={orden.id ?? orden.nombre}>
-                    <Cell>
-                        {orden.nombre}
-                    </Cell>
-                    <Cell>{orden.estado}</Cell>
-                    <Cell>{orden.fecha}</Cell>
-                    <Cell>{orden.locacion}</Cell>
-                  </TableRow>
+                  <LinkStyled key={orden.id ?? orden.nombre} to={`/detalle-prestamo/${orden.id}`}>
+                    <TableRow>
+                      <Cell>{orden.nombre}</Cell>
+                      <Cell>{orden.estado}</Cell>
+                      <Cell>{orden.fecha}</Cell>
+                      <Cell>{orden.locacion}</Cell>
+                    </TableRow>
                   </LinkStyled>
                 ))}
               </ScrollableTableBody>
@@ -103,11 +129,11 @@ const Home = () => {
       )}
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
-      {!error && data.length === 0 && (
+      {!error && ordenes.length === 0 && (
         <LoadingMessage>Cargando órdenes o no hay registros.</LoadingMessage>
       )}
 
-      {!error && data.length > 0 && (
+      {!error && ordenes.length > 0 && (
         <>
           <SubTitle>Órdenes de Compra con Artículos Pendientes</SubTitle>
           {pendientes.length > 0 ? (
@@ -115,22 +141,19 @@ const Home = () => {
               <TableHeader>
                 <Cell>Orden</Cell>
                 <Cell>Fecha</Cell>
-                <Cell>Codigo de referencia:</Cell>
-                <Cell>Provedor</Cell>
+                <Cell>Código de referencia</Cell>
+                <Cell>Proveedor</Cell>
               </TableHeader>
               <ScrollableTableBody>
                 {pendientes.map((orden) => (
-                  
-                      <LinkStyled to={`/orden-compra/${orden.id}`}>
-                  <TableRow key={orden.id ?? orden.nombre}>
-                    <Cell>
-                        {orden.id}
-                    </Cell>
-                    <Cell>{orden.fecha}</Cell>
-                    <Cell>{orden.codigo_ref}</Cell>
-                    <Cell>{orden.proveedor.razon_social}</Cell>
-                  </TableRow>
-                      </LinkStyled>
+                  <LinkStyled key={orden.id ?? orden.codigo_ref} to={`/orden-compra/${orden.id}`}>
+                    <TableRow>
+                      <Cell>{orden.id}</Cell>
+                      <Cell>{orden.fecha}</Cell>
+                      <Cell>{orden.codigo_ref}</Cell>
+                      <Cell>{orden.proveedor?.razon_social}</Cell>
+                    </TableRow>
+                  </LinkStyled>
                 ))}
               </ScrollableTableBody>
             </Table>
@@ -148,28 +171,28 @@ export default Home;
 // --- Estilos ---
 
 const Container = styled.div`
+  position: relative;
+  min-height: 100vh; /* ✅ asegura que cubra todo el alto de la ventana */
   max-width: 900px;
-  margin: 30px auto;
-  padding: 0 24px;
+  margin: 0 auto;
+  padding: 30px 24px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
+  display: flex;
+  flex-direction: column;
 
   /* Imagen de fondo */
   &::before {
     content: "";
-    position: absolute;
-    inset: 0;
+    position: fixed; /* ✅ cambia de absolute a fixed */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: url("/fondo.jpg");
     background-size: cover;
     background-position: center;
-    opacity: 0.2; /* Ajusta la opacidad */
-    z-index: 0;
-  }
-
-  /* Contenido encima de la imagen */
-  > * {
-    position: relative;
-    z-index: 1;
+    opacity: 0.25;
+    z-index: -1; /* ✅ asegura que quede detrás de todo */
   }
 `;
 
@@ -180,12 +203,67 @@ const Title = styled.p`
   color: #222;
 `;
 
+const TopBar = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+`;
+
+const Actions = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+
+  @media (max-width: 720px) {
+    justify-content: stretch;
+  }
+`;
+
+const ActionButtonBase = styled.button`
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease, transform 0.06s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+  &:active {
+    transform: translateY(1px);
+  }
+`;
+
+const ActionButton = styled(ActionButtonBase)`
+  background-color: #28a745;
+  color: white;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+const ActionButtonSecondary = styled(ActionButtonBase)`
+  background-color: #0ea5e9;
+  color: white;
+
+  &:hover {
+    background-color: #0284c7;
+  }
+`;
+
 const Subtitle = styled.h2`
-  text-align: center;
   font-size: 1.1rem;
   color: #666;
   font-weight: 400;
-  margin-bottom: 24px;
+  margin: 0;
 `;
 
 const SubTitle = styled.p`
@@ -261,8 +339,6 @@ const LinkStyled = styled(Link)`
     text-decoration: underline;
   }
 `;
-
-// --- Tabla ---
 
 const Table = styled.div`
   margin-top: 16px;

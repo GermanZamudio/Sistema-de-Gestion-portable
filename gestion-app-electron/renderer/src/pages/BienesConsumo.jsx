@@ -27,9 +27,8 @@ const PrimaryButton = styled(CreateButton)`
   &:hover { background-color: #0069d9; }
 `;
 
-const Title = styled.h1`
-  font-size: 1.8rem;
-  font-weight: 600;
+const Title = styled.p`
+  font-size: 1.5rem;
   margin-bottom: 1.2rem;
 `;
 

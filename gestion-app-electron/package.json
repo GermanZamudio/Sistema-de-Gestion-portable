@@ -1,16 +1,21 @@
 {
   "name": "gestion-app-electron",
   "version": "1.0.0",
+  "author": "German Zamudio",
+  "description": "Sistema de Gestión portable (Electron + Express + React)",
   "main": "main.js",
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "dev": "concurrently \"npm run start\" \"npm run dev --prefix renderer\""
+    "dev": "npm run dev:root || npm run dev:local",
+    "dev:root": "concurrently -k \"npm:renderer-dev-root\" \"npm:start:wait\"",
+    "renderer-dev-root": "npm run dev --prefix ../renderer",
+    "dev:local": "concurrently -k \"npm:renderer-dev-local\" \"npm:start:wait\"",
+    "renderer-dev-local": "npm run dev --prefix ./renderer",
+    "start:wait": "wait-on http://localhost:5173 && electron .",
+    "build:renderer": "npm run build --prefix ../renderer || npm run build --prefix ./renderer",
+    "dist": "npm run build:renderer && electron-builder"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "axios": "^1.10.0",
     "better-sqlite3": "^11.10.0",
@@ -33,36 +38,29 @@
     "electron-rebuild": "^3.2.9",
     "wait-on": "^8.0.3"
   },
-  "build": {
-    "appId": "com.gestion.app",
-    "productName": "GestionApp",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "/*",
-      "!dist",
-      "!node_modules/.cache",
-      "!/.md"
-    ],
-    "extraResources": [
-      {
-        "from": "db/",
-        "to": "db",
-        "filter": [
-          "**/.db"
-        ]
-      },
-      {
-        "from": "assets/",
-        "to": "assets",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "win": {
-      "target": "portable"
-    }
-  }
+"build": {
+  "directories": { "output": "C:/electron-builds/GestionApp" },
+  "asar": true,
+  "asarUnpack": [
+    "node_modules/better-sqlite3/**",
+    "node_modules/sharp/**"
+  ],
+  "npmRebuild": true,
+  "files": [
+    "main.js",
+    "preload.js",
+    "routes/**",
+    "helpers/**",         
+    "db/**",
+    "assets/**",
+    "package.json"
+  ],
+  "extraResources": [
+    { "from": "renderer/dist", "to": "renderer/dist" },
+    { "from": "db", "to": "db" },
+    { "from": "assets", "to": "assets" }
+  ],
+  "win": { "target": "portable" }
+}
+
 }

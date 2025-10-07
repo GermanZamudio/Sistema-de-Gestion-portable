@@ -1,6 +1,11 @@
-const db = require('./db');
+const Database = require('better-sqlite3');
+const path = require('path');
 
-function initDatabase() {
+function initDatabase(dbPathArg) {
+  const dbPath = dbPathArg || process.env.DB_PATH || path.join(__dirname, 'gestion.sqlite');
+  const db = new Database(dbPath);
+  db.pragma('foreign_keys = ON');
+  db.pragma('journal_mode = WAL');
   /***************** ATRIBUTOS *******************/
   db.prepare(`
     CREATE TABLE IF NOT EXISTS unidad_medida (
@@ -479,6 +484,8 @@ function initDatabase() {
     END;
   `);
   console.log("Todas las tablas fueron creadas (si no existían).");
+  global.db = db;       // opcional: la dejamos accesible para backups
+  return db;            // <- MUY IMPORTANTE: devolvemos la instancia
 }
 
 module.exports = initDatabase;

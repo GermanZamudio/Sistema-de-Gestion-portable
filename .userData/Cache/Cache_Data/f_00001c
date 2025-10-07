@@ -1,0 +1,371 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/pages/Vehiculos.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=324a4e66"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+var _s = $RefreshSig$();
+import __vite__cjsImport3_react from "/node_modules/.vite/deps/react.js?v=324a4e66"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useEffect = __vite__cjsImport3_react["useEffect"]; const useState = __vite__cjsImport3_react["useState"];
+import styled from "/node_modules/.vite/deps/styled-components.js?v=324a4e66";
+import { Link } from "/node_modules/.vite/deps/react-router-dom.js?v=324a4e66";
+const Container = styled.div`
+  max-width: 900px;
+  margin: 50px auto 80px;
+  padding: 0 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+`;
+_c = Container;
+const Title = styled.p`
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+  color: #1f2937;
+`;
+_c2 = Title;
+const Button = styled.button`
+  background-color:  #28a745;
+  color: white;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: background-color 0.25s ease;
+
+  &:hover {
+    background-color:#208738;
+  }
+`;
+_c3 = Button;
+const ErrorMessage = styled.p`
+  color: red;
+  font-weight: 600;
+  text-align: center;
+`;
+_c4 = ErrorMessage;
+const VehicleList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+_c5 = VehicleList;
+const VehicleCard = styled.li`
+  padding: 16px 20px;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+  transition: box-shadow 0.25s ease;
+
+  &:hover {
+    box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+  }
+`;
+_c6 = VehicleCard;
+const VehicleInfo = styled.div`
+  font-size: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+`;
+_c7 = VehicleInfo;
+const Label = styled.span`
+  color: #2563eb; /* azul para etiquetas */
+  font-weight: 600;
+`;
+_c8 = Label;
+const Value = styled.span`
+  color: #4b5563; /* gris para valores */
+  font-weight: 500;
+`;
+_c9 = Value;
+const StyledLink = styled(Link)`
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+_c0 = StyledLink;
+const EmptyMessage = styled.p`
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  margin-top: 20px;
+`;
+_c1 = EmptyMessage;
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: ${({ show }) => show ? "flex" : "none"};
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+_c10 = ModalOverlay;
+const ModalContent = styled.div`
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 400px;
+`;
+_c11 = ModalContent;
+const ModalTitle = styled.h3`
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+`;
+_c12 = ModalTitle;
+const Input = styled.input`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+`;
+_c13 = Input;
+const ModalButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+`;
+_c14 = ModalButtons;
+export default function Vehiculos() {
+  _s();
+  const [vehiculoInfo, setVehiculoInfo] = useState(null);
+  const [departamentos, setDepartamentos] = useState([]);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    numero: "",
+    piso: "",
+    telefono: "",
+    nombre_inquilino: "",
+    apellido_inquilino: "",
+    jerarquia: ""
+  });
+  useEffect(() => {
+    async function fetchDepartamentos() {
+      try {
+        const response = await window.api.get("/api/edificios/vehiculos");
+        if (response.error) throw new Error(response.error);
+        const vehiculo = response.VEHICULO;
+        if (!vehiculo || !vehiculo.pisos) {
+          setVehiculoInfo(vehiculo);
+          setDepartamentos([]);
+          return;
+        }
+        const departamentosArray = Object.values(vehiculo.pisos).flat();
+        setVehiculoInfo(vehiculo);
+        setDepartamentos(departamentosArray);
+      } catch (err) {
+        setError(err.message || "Error al obtener los vehículos");
+      }
+    }
+    fetchDepartamentos();
+  }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleCreateVehiculo = async () => {
+    try {
+      const result = await window.api.post("/api/edificios/new_vehiculo/", formData);
+      if (result.error) throw new Error(result.error);
+      setDepartamentos([...departamentos, result]);
+      setShowModal(false);
+      setFormData({
+        numero: "",
+        piso: "",
+        telefono: "",
+        nombre_inquilino: "",
+        apellido_inquilino: "",
+        jerarquia: ""
+      });
+    } catch (err) {
+      alert(err.message || "Error al crear vehículo");
+    }
+  };
+  return /* @__PURE__ */ jsxDEV(Container, { children: [
+    /* @__PURE__ */ jsxDEV(Title, { children: "Vehículos" }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 215,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(Button, { onClick: () => setShowModal(true), children: "Crear Vehículo" }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 216,
+      columnNumber: 7
+    }, this),
+    error && /* @__PURE__ */ jsxDEV(ErrorMessage, { children: error }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 218,
+      columnNumber: 17
+    }, this),
+    Array.isArray(departamentos) && departamentos.length > 0 ? /* @__PURE__ */ jsxDEV(VehicleList, { children: departamentos.map(
+      (dpto) => /* @__PURE__ */ jsxDEV(VehicleCard, { children: [
+        /* @__PURE__ */ jsxDEV(VehicleInfo, { children: [
+          /* @__PURE__ */ jsxDEV(Label, { children: "Patente:" }, void 0, false, {
+            fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+            lineNumber: 225,
+            columnNumber: 17
+          }, this),
+          " ",
+          /* @__PURE__ */ jsxDEV(Value, { children: dpto.numero }, void 0, false, {
+            fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+            lineNumber: 225,
+            columnNumber: 41
+          }, this),
+          /* @__PURE__ */ jsxDEV(Label, { children: "Marca:" }, void 0, false, {
+            fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+            lineNumber: 226,
+            columnNumber: 17
+          }, this),
+          " ",
+          /* @__PURE__ */ jsxDEV(Value, { children: dpto.piso }, void 0, false, {
+            fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+            lineNumber: 226,
+            columnNumber: 39
+          }, this)
+        ] }, void 0, true, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+          lineNumber: 224,
+          columnNumber: 15
+        }, this),
+        /* @__PURE__ */ jsxDEV(StyledLink, { to: `/departamento/${dpto.id}`, children: "Ver detalles" }, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+          lineNumber: 228,
+          columnNumber: 15
+        }, this)
+      ] }, dpto.id, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 223,
+        columnNumber: 9
+      }, this)
+    ) }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 221,
+      columnNumber: 7
+    }, this) : /* @__PURE__ */ jsxDEV(EmptyMessage, { children: "No hay vehículos cargados." }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 235,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(ModalOverlay, { show: showModal, children: /* @__PURE__ */ jsxDEV(ModalContent, { children: [
+      /* @__PURE__ */ jsxDEV(ModalTitle, { children: "Crear Vehículo" }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 241,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "numero", placeholder: "Patente", value: formData.numero, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 242,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "piso", placeholder: "Marca", value: formData.piso, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 243,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "telefono", placeholder: "Teléfono", value: formData.telefono, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 244,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "nombre_inquilino", placeholder: "Nombre", value: formData.nombre_inquilino, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 245,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "apellido_inquilino", placeholder: "Apellido", value: formData.apellido_inquilino, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 246,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Input, { name: "jerarquia", placeholder: "Jerarquía", value: formData.jerarquia, onChange: handleChange }, void 0, false, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 247,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(ModalButtons, { children: [
+        /* @__PURE__ */ jsxDEV(Button, { onClick: () => setShowModal(false), children: "Cancelar" }, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+          lineNumber: 250,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV(Button, { onClick: handleCreateVehiculo, children: "Guardar" }, void 0, false, {
+          fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+          lineNumber: 251,
+          columnNumber: 13
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+        lineNumber: 249,
+        columnNumber: 11
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 240,
+      columnNumber: 9
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+      lineNumber: 239,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx",
+    lineNumber: 214,
+    columnNumber: 5
+  }, this);
+}
+_s(Vehiculos, "U+43c4nZ1IeifaQu0gS6Chnws4E=");
+_c15 = Vehiculos;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c0, _c1, _c10, _c11, _c12, _c13, _c14, _c15;
+$RefreshReg$(_c, "Container");
+$RefreshReg$(_c2, "Title");
+$RefreshReg$(_c3, "Button");
+$RefreshReg$(_c4, "ErrorMessage");
+$RefreshReg$(_c5, "VehicleList");
+$RefreshReg$(_c6, "VehicleCard");
+$RefreshReg$(_c7, "VehicleInfo");
+$RefreshReg$(_c8, "Label");
+$RefreshReg$(_c9, "Value");
+$RefreshReg$(_c0, "StyledLink");
+$RefreshReg$(_c1, "EmptyMessage");
+$RefreshReg$(_c10, "ModalOverlay");
+$RefreshReg$(_c11, "ModalContent");
+$RefreshReg$(_c12, "ModalTitle");
+$RefreshReg$(_c13, "Input");
+$RefreshReg$(_c14, "ModalButtons");
+$RefreshReg$(_c15, "Vehiculos");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/Germa/OneDrive/Escritorio/Sistema de Gestion portable/gestion-app-electron/renderer/src/pages/Vehiculos.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBbU1NOzs7Ozs7Ozs7Ozs7Ozs7OztBQW5NTixPQUFPQSxTQUFTQyxXQUFXQyxnQkFBZ0I7QUFDM0MsT0FBT0MsWUFBWTtBQUNuQixTQUFTQyxZQUFZO0FBRXJCLE1BQU1DLFlBQVlGLE9BQU9HO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBS3ZCQyxLQUxJRjtBQU9OLE1BQU1HLFFBQVFMLE9BQU9NO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBS25CQyxNQUxJRjtBQU9OLE1BQU1HLFNBQVNSLE9BQU9TO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBY3BCQyxNQWRJRjtBQWdCTixNQUFNRyxlQUFlWCxPQUFPTTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUkxQk0sTUFKSUQ7QUFNTixNQUFNRSxjQUFjYixPQUFPYztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQU96QkMsTUFQSUY7QUFTTixNQUFNRyxjQUFjaEIsT0FBT2lCO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBVXpCQyxNQVZJRjtBQVlOLE1BQU1HLGNBQWNuQixPQUFPRztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUt6QmlCLE1BTElEO0FBT04sTUFBTUUsUUFBUXJCLE9BQU9zQjtBQUFBQTtBQUFBQTtBQUFBQTtBQUduQkMsTUFISUY7QUFLTixNQUFNRyxRQUFReEIsT0FBT3NCO0FBQUFBO0FBQUFBO0FBQUFBO0FBR25CRyxNQUhJRDtBQUtOLE1BQU1FLGFBQWExQixPQUFPQyxJQUFJO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBTTVCMEIsTUFOSUQ7QUFRTixNQUFNRSxlQUFlNUIsT0FBT007QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFLMUJ1QixNQUxJRDtBQU9OLE1BQU1FLGVBQWU5QixPQUFPRztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQSxhQU9mLENBQUMsRUFBRTRCLEtBQUssTUFBT0EsT0FBTyxTQUFTLE1BQU87QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUlqREMsT0FYSUY7QUFhTixNQUFNRyxlQUFlakMsT0FBT0c7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFLMUIrQixPQUxJRDtBQU9OLE1BQU1FLGFBQWFuQyxPQUFPb0M7QUFBQUE7QUFBQUE7QUFBQUE7QUFHeEJDLE9BSElGO0FBS04sTUFBTUcsUUFBUXRDLE9BQU91QztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQU1uQkMsT0FOSUY7QUFRTixNQUFNRyxlQUFlekMsT0FBT0c7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFJMUJ1QyxPQUpJRDtBQU1OLHdCQUF3QkUsWUFBWTtBQUFBQyxLQUFBO0FBQ2xDLFFBQU0sQ0FBQ0MsY0FBY0MsZUFBZSxJQUFJL0MsU0FBUyxJQUFJO0FBQ3JELFFBQU0sQ0FBQ2dELGVBQWVDLGdCQUFnQixJQUFJakQsU0FBUyxFQUFFO0FBQ3JELFFBQU0sQ0FBQ2tELE9BQU9DLFFBQVEsSUFBSW5ELFNBQVMsRUFBRTtBQUNyQyxRQUFNLENBQUNvRCxXQUFXQyxZQUFZLElBQUlyRCxTQUFTLEtBQUs7QUFDaEQsUUFBTSxDQUFDc0QsVUFBVUMsV0FBVyxJQUFJdkQsU0FBUztBQUFBLElBQ3ZDd0QsUUFBUTtBQUFBLElBQ1JDLE1BQU07QUFBQSxJQUNOQyxVQUFVO0FBQUEsSUFDVkMsa0JBQWtCO0FBQUEsSUFDbEJDLG9CQUFvQjtBQUFBLElBQ3BCQyxXQUFXO0FBQUEsRUFDYixDQUFDO0FBRUQ5RCxZQUFVLE1BQU07QUFDZCxtQkFBZStELHFCQUFxQjtBQUNsQyxVQUFJO0FBQ0YsY0FBTUMsV0FBVyxNQUFNQyxPQUFPQyxJQUFJQyxJQUFJLDBCQUEwQjtBQUNoRSxZQUFJSCxTQUFTYixNQUFPLE9BQU0sSUFBSWlCLE1BQU1KLFNBQVNiLEtBQUs7QUFFbEQsY0FBTWtCLFdBQVdMLFNBQVNNO0FBQzFCLFlBQUksQ0FBQ0QsWUFBWSxDQUFDQSxTQUFTRSxPQUFPO0FBQ2hDdkIsMEJBQWdCcUIsUUFBUTtBQUN4Qm5CLDJCQUFpQixFQUFFO0FBQ25CO0FBQUEsUUFDRjtBQUVBLGNBQU1zQixxQkFBcUJDLE9BQU9DLE9BQU9MLFNBQVNFLEtBQUssRUFBRUksS0FBSztBQUM5RDNCLHdCQUFnQnFCLFFBQVE7QUFDeEJuQix5QkFBaUJzQixrQkFBa0I7QUFBQSxNQUNyQyxTQUFTSSxLQUFLO0FBQ1p4QixpQkFBU3dCLElBQUlDLFdBQVcsZ0NBQWdDO0FBQUEsTUFDMUQ7QUFBQSxJQUNGO0FBQ0FkLHVCQUFtQjtBQUFBLEVBQ3JCLEdBQUcsRUFBRTtBQUVMLFFBQU1lLGVBQWVBLENBQUNDLE1BQU07QUFDMUJ2QixnQkFBWSxFQUFFLEdBQUdELFVBQVUsQ0FBQ3dCLEVBQUVDLE9BQU9DLElBQUksR0FBR0YsRUFBRUMsT0FBT0UsTUFBTSxDQUFDO0FBQUEsRUFDOUQ7QUFFQSxRQUFNQyx1QkFBdUIsWUFBWTtBQUN2QyxRQUFJO0FBQ0YsWUFBTUMsU0FBUyxNQUFNbkIsT0FBT0MsSUFBSW1CLEtBQUssZ0NBQWdDOUIsUUFBUTtBQUM3RSxVQUFJNkIsT0FBT2pDLE1BQU8sT0FBTSxJQUFJaUIsTUFBTWdCLE9BQU9qQyxLQUFLO0FBRTlDRCx1QkFBaUIsQ0FBQyxHQUFHRCxlQUFlbUMsTUFBTSxDQUFDO0FBQzNDOUIsbUJBQWEsS0FBSztBQUNsQkUsa0JBQVk7QUFBQSxRQUNWQyxRQUFRO0FBQUEsUUFDUkMsTUFBTTtBQUFBLFFBQ05DLFVBQVU7QUFBQSxRQUNWQyxrQkFBa0I7QUFBQSxRQUNsQkMsb0JBQW9CO0FBQUEsUUFDcEJDLFdBQVc7QUFBQSxNQUNiLENBQUM7QUFBQSxJQUNILFNBQVNjLEtBQUs7QUFDWlUsWUFBTVYsSUFBSUMsV0FBVyx5QkFBeUI7QUFBQSxJQUNoRDtBQUFBLEVBQ0Y7QUFFQSxTQUNFLHVCQUFDLGFBQ0M7QUFBQSwyQkFBQyxTQUFNLHlCQUFQO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FBZ0I7QUFBQSxJQUNoQix1QkFBQyxVQUFPLFNBQVMsTUFBTXZCLGFBQWEsSUFBSSxHQUFHLDhCQUEzQztBQUFBO0FBQUE7QUFBQTtBQUFBLFdBQXlEO0FBQUEsSUFFeERILFNBQVMsdUJBQUMsZ0JBQWNBLG1CQUFmO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FBcUI7QUFBQSxJQUU5Qm9DLE1BQU1DLFFBQVF2QyxhQUFhLEtBQUtBLGNBQWN3QyxTQUFTLElBQ3RELHVCQUFDLGVBQ0V4Qyx3QkFBY3lDO0FBQUFBLE1BQUksQ0FBQ0MsU0FDbEIsdUJBQUMsZUFDQztBQUFBLCtCQUFDLGVBQ0M7QUFBQSxpQ0FBQyxTQUFNLHdCQUFQO0FBQUE7QUFBQTtBQUFBO0FBQUEsaUJBQWU7QUFBQSxVQUFRO0FBQUEsVUFBQyx1QkFBQyxTQUFPQSxlQUFLbEMsVUFBYjtBQUFBO0FBQUE7QUFBQTtBQUFBLGlCQUFvQjtBQUFBLFVBQzVDLHVCQUFDLFNBQU0sc0JBQVA7QUFBQTtBQUFBO0FBQUE7QUFBQSxpQkFBYTtBQUFBLFVBQVE7QUFBQSxVQUFDLHVCQUFDLFNBQU9rQyxlQUFLakMsUUFBYjtBQUFBO0FBQUE7QUFBQTtBQUFBLGlCQUFrQjtBQUFBLGFBRjFDO0FBQUE7QUFBQTtBQUFBO0FBQUEsZUFHQTtBQUFBLFFBQ0EsdUJBQUMsY0FBVyxJQUFJLGlCQUFpQmlDLEtBQUtDLEVBQUUsSUFBSSw0QkFBNUM7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUVBO0FBQUEsV0FQZ0JELEtBQUtDLElBQXZCO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFRQTtBQUFBLElBQ0QsS0FYSDtBQUFBO0FBQUE7QUFBQTtBQUFBLFdBWUEsSUFFQSx1QkFBQyxnQkFBYSwwQ0FBZDtBQUFBO0FBQUE7QUFBQTtBQUFBLFdBQXdDO0FBQUEsSUFJMUMsdUJBQUMsZ0JBQWEsTUFBTXZDLFdBQ2xCLGlDQUFDLGdCQUNDO0FBQUEsNkJBQUMsY0FBVyw4QkFBWjtBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQTBCO0FBQUEsTUFDMUIsdUJBQUMsU0FBTSxNQUFLLFVBQVMsYUFBWSxXQUFVLE9BQU9FLFNBQVNFLFFBQVEsVUFBVXFCLGdCQUE3RTtBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQTBGO0FBQUEsTUFDMUYsdUJBQUMsU0FBTSxNQUFLLFFBQU8sYUFBWSxTQUFRLE9BQU92QixTQUFTRyxNQUFNLFVBQVVvQixnQkFBdkU7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUFvRjtBQUFBLE1BQ3BGLHVCQUFDLFNBQU0sTUFBSyxZQUFXLGFBQVksWUFBVyxPQUFPdkIsU0FBU0ksVUFBVSxVQUFVbUIsZ0JBQWxGO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBK0Y7QUFBQSxNQUMvRix1QkFBQyxTQUFNLE1BQUssb0JBQW1CLGFBQVksVUFBUyxPQUFPdkIsU0FBU0ssa0JBQWtCLFVBQVVrQixnQkFBaEc7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUE2RztBQUFBLE1BQzdHLHVCQUFDLFNBQU0sTUFBSyxzQkFBcUIsYUFBWSxZQUFXLE9BQU92QixTQUFTTSxvQkFBb0IsVUFBVWlCLGdCQUF0RztBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQW1IO0FBQUEsTUFDbkgsdUJBQUMsU0FBTSxNQUFLLGFBQVksYUFBWSxhQUFZLE9BQU92QixTQUFTTyxXQUFXLFVBQVVnQixnQkFBckY7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUFrRztBQUFBLE1BRWxHLHVCQUFDLGdCQUNDO0FBQUEsK0JBQUMsVUFBTyxTQUFTLE1BQU14QixhQUFhLEtBQUssR0FBRyx3QkFBNUM7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUFvRDtBQUFBLFFBQ3BELHVCQUFDLFVBQU8sU0FBUzZCLHNCQUFzQix1QkFBdkM7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUE4QztBQUFBLFdBRmhEO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFHQTtBQUFBLFNBWkY7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQWFBLEtBZEY7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQWVBO0FBQUEsT0F4Q0Y7QUFBQTtBQUFBO0FBQUE7QUFBQSxTQXlDQTtBQUVKO0FBQUNyQyxHQXpHdUJELFdBQVM7QUFBQWdELE9BQVRoRDtBQUFTLElBQUF2QyxJQUFBRyxLQUFBRyxLQUFBRSxLQUFBRyxLQUFBRyxLQUFBRSxLQUFBRyxLQUFBRSxLQUFBRSxLQUFBRSxLQUFBRyxNQUFBRSxNQUFBRyxNQUFBRyxNQUFBRSxNQUFBaUQ7QUFBQUMsYUFBQXhGLElBQUE7QUFBQXdGLGFBQUFyRixLQUFBO0FBQUFxRixhQUFBbEYsS0FBQTtBQUFBa0YsYUFBQWhGLEtBQUE7QUFBQWdGLGFBQUE3RSxLQUFBO0FBQUE2RSxhQUFBMUUsS0FBQTtBQUFBMEUsYUFBQXhFLEtBQUE7QUFBQXdFLGFBQUFyRSxLQUFBO0FBQUFxRSxhQUFBbkUsS0FBQTtBQUFBbUUsYUFBQWpFLEtBQUE7QUFBQWlFLGFBQUEvRCxLQUFBO0FBQUErRCxhQUFBNUQsTUFBQTtBQUFBNEQsYUFBQTFELE1BQUE7QUFBQTBELGFBQUF2RCxNQUFBO0FBQUF1RCxhQUFBcEQsTUFBQTtBQUFBb0QsYUFBQWxELE1BQUE7QUFBQWtELGFBQUFELE1BQUEiLCJuYW1lcyI6WyJSZWFjdCIsInVzZUVmZmVjdCIsInVzZVN0YXRlIiwic3R5bGVkIiwiTGluayIsIkNvbnRhaW5lciIsImRpdiIsIl9jIiwiVGl0bGUiLCJwIiwiX2MyIiwiQnV0dG9uIiwiYnV0dG9uIiwiX2MzIiwiRXJyb3JNZXNzYWdlIiwiX2M0IiwiVmVoaWNsZUxpc3QiLCJ1bCIsIl9jNSIsIlZlaGljbGVDYXJkIiwibGkiLCJfYzYiLCJWZWhpY2xlSW5mbyIsIl9jNyIsIkxhYmVsIiwic3BhbiIsIl9jOCIsIlZhbHVlIiwiX2M5IiwiU3R5bGVkTGluayIsIl9jMCIsIkVtcHR5TWVzc2FnZSIsIl9jMSIsIk1vZGFsT3ZlcmxheSIsInNob3ciLCJfYzEwIiwiTW9kYWxDb250ZW50IiwiX2MxMSIsIk1vZGFsVGl0bGUiLCJoMyIsIl9jMTIiLCJJbnB1dCIsImlucHV0IiwiX2MxMyIsIk1vZGFsQnV0dG9ucyIsIl9jMTQiLCJWZWhpY3Vsb3MiLCJfcyIsInZlaGljdWxvSW5mbyIsInNldFZlaGljdWxvSW5mbyIsImRlcGFydGFtZW50b3MiLCJzZXREZXBhcnRhbWVudG9zIiwiZXJyb3IiLCJzZXRFcnJvciIsInNob3dNb2RhbCIsInNldFNob3dNb2RhbCIsImZvcm1EYXRhIiwic2V0Rm9ybURhdGEiLCJudW1lcm8iLCJwaXNvIiwidGVsZWZvbm8iLCJub21icmVfaW5xdWlsaW5vIiwiYXBlbGxpZG9faW5xdWlsaW5vIiwiamVyYXJxdWlhIiwiZmV0Y2hEZXBhcnRhbWVudG9zIiwicmVzcG9uc2UiLCJ3aW5kb3ciLCJhcGkiLCJnZXQiLCJFcnJvciIsInZlaGljdWxvIiwiVkVISUNVTE8iLCJwaXNvcyIsImRlcGFydGFtZW50b3NBcnJheSIsIk9iamVjdCIsInZhbHVlcyIsImZsYXQiLCJlcnIiLCJtZXNzYWdlIiwiaGFuZGxlQ2hhbmdlIiwiZSIsInRhcmdldCIsIm5hbWUiLCJ2YWx1ZSIsImhhbmRsZUNyZWF0ZVZlaGljdWxvIiwicmVzdWx0IiwicG9zdCIsImFsZXJ0IiwiQXJyYXkiLCJpc0FycmF5IiwibGVuZ3RoIiwibWFwIiwiZHB0byIsImlkIiwiX2MxNSIsIiRSZWZyZXNoUmVnJCJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJWZWhpY3Vsb3MuanN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBSZWFjdCwgeyB1c2VFZmZlY3QsIHVzZVN0YXRlIH0gZnJvbSAncmVhY3QnO1xyXG5pbXBvcnQgc3R5bGVkIGZyb20gJ3N0eWxlZC1jb21wb25lbnRzJztcclxuaW1wb3J0IHsgTGluayB9IGZyb20gJ3JlYWN0LXJvdXRlci1kb20nO1xyXG5cclxuY29uc3QgQ29udGFpbmVyID0gc3R5bGVkLmRpdmBcclxuICBtYXgtd2lkdGg6IDkwMHB4O1xyXG4gIG1hcmdpbjogNTBweCBhdXRvIDgwcHg7XHJcbiAgcGFkZGluZzogMCAyMHB4O1xyXG4gIGZvbnQtZmFtaWx5OiBcIlNlZ29lIFVJXCIsIFRhaG9tYSwgR2VuZXZhLCBWZXJkYW5hLCBzYW5zLXNlcmlmO1xyXG5gO1xyXG5cclxuY29uc3QgVGl0bGUgPSBzdHlsZWQucGBcclxuICB0ZXh0LWFsaWduOiBjZW50ZXI7XHJcbiAgbWFyZ2luLWJvdHRvbTogMzBweDtcclxuICBmb250LXNpemU6IDEuOHJlbTtcclxuICBjb2xvcjogIzFmMjkzNztcclxuYDtcclxuXHJcbmNvbnN0IEJ1dHRvbiA9IHN0eWxlZC5idXR0b25gXHJcbiAgYmFja2dyb3VuZC1jb2xvcjogICMyOGE3NDU7XHJcbiAgY29sb3I6IHdoaXRlO1xyXG4gIGZvbnQtd2VpZ2h0OiA2MDA7XHJcbiAgcGFkZGluZzogMTBweCAxNnB4O1xyXG4gIGJvcmRlci1yYWRpdXM6IDhweDtcclxuICBib3JkZXI6IG5vbmU7XHJcbiAgY3Vyc29yOiBwb2ludGVyO1xyXG4gIG1hcmdpbi1ib3R0b206IDIwcHg7XHJcbiAgdHJhbnNpdGlvbjogYmFja2dyb3VuZC1jb2xvciAwLjI1cyBlYXNlO1xyXG5cclxuICAmOmhvdmVyIHtcclxuICAgIGJhY2tncm91bmQtY29sb3I6IzIwODczODtcclxuICB9XHJcbmA7XHJcblxyXG5jb25zdCBFcnJvck1lc3NhZ2UgPSBzdHlsZWQucGBcclxuICBjb2xvcjogcmVkO1xyXG4gIGZvbnQtd2VpZ2h0OiA2MDA7XHJcbiAgdGV4dC1hbGlnbjogY2VudGVyO1xyXG5gO1xyXG5cclxuY29uc3QgVmVoaWNsZUxpc3QgPSBzdHlsZWQudWxgXHJcbiAgbGlzdC1zdHlsZS10eXBlOiBub25lO1xyXG4gIHBhZGRpbmc6IDA7XHJcbiAgbWFyZ2luOiAwO1xyXG4gIGRpc3BsYXk6IGZsZXg7XHJcbiAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcclxuICBnYXA6IDEycHg7XHJcbmA7XHJcblxyXG5jb25zdCBWZWhpY2xlQ2FyZCA9IHN0eWxlZC5saWBcclxuICBwYWRkaW5nOiAxNnB4IDIwcHg7XHJcbiAgYm9yZGVyLXJhZGl1czogMTJweDtcclxuICBiYWNrZ3JvdW5kLWNvbG9yOiAjZmZmO1xyXG4gIGJveC1zaGFkb3c6IDAgNnB4IDEycHggcmdiYSgwLDAsMCwwLjA2KTtcclxuICB0cmFuc2l0aW9uOiBib3gtc2hhZG93IDAuMjVzIGVhc2U7XHJcblxyXG4gICY6aG92ZXIge1xyXG4gICAgYm94LXNoYWRvdzogMCAxMHB4IDE4cHggcmdiYSgwLDAsMCwwLjEyKTtcclxuICB9XHJcbmA7XHJcblxyXG5jb25zdCBWZWhpY2xlSW5mbyA9IHN0eWxlZC5kaXZgXHJcbiAgZm9udC1zaXplOiAwLjk1cmVtO1xyXG4gIGRpc3BsYXk6IGZsZXg7XHJcbiAgZmxleC13cmFwOiB3cmFwO1xyXG4gIGdhcDogMTJweDtcclxuYDtcclxuXHJcbmNvbnN0IExhYmVsID0gc3R5bGVkLnNwYW5gXHJcbiAgY29sb3I6ICMyNTYzZWI7IC8qIGF6dWwgcGFyYSBldGlxdWV0YXMgKi9cclxuICBmb250LXdlaWdodDogNjAwO1xyXG5gO1xyXG5cclxuY29uc3QgVmFsdWUgPSBzdHlsZWQuc3BhbmBcclxuICBjb2xvcjogIzRiNTU2MzsgLyogZ3JpcyBwYXJhIHZhbG9yZXMgKi9cclxuICBmb250LXdlaWdodDogNTAwO1xyXG5gO1xyXG5cclxuY29uc3QgU3R5bGVkTGluayA9IHN0eWxlZChMaW5rKWBcclxuICB0ZXh0LWRlY29yYXRpb246IG5vbmU7XHJcblxyXG4gICY6aG92ZXIge1xyXG4gICAgdGV4dC1kZWNvcmF0aW9uOiB1bmRlcmxpbmU7XHJcbiAgfVxyXG5gO1xyXG5cclxuY29uc3QgRW1wdHlNZXNzYWdlID0gc3R5bGVkLnBgXHJcbiAgY29sb3I6ICM2NjY7XHJcbiAgZm9udC1zdHlsZTogaXRhbGljO1xyXG4gIHRleHQtYWxpZ246IGNlbnRlcjtcclxuICBtYXJnaW4tdG9wOiAyMHB4O1xyXG5gO1xyXG5cclxuY29uc3QgTW9kYWxPdmVybGF5ID0gc3R5bGVkLmRpdmBcclxuICBwb3NpdGlvbjogZml4ZWQ7XHJcbiAgdG9wOiAwO1xyXG4gIGxlZnQ6IDA7XHJcbiAgcmlnaHQ6IDA7XHJcbiAgYm90dG9tOiAwO1xyXG4gIGJhY2tncm91bmQ6IHJnYmEoMCwwLDAsMC41KTtcclxuICBkaXNwbGF5OiAkeyh7IHNob3cgfSkgPT4gKHNob3cgPyAnZmxleCcgOiAnbm9uZScpfTtcclxuICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjtcclxuICBhbGlnbi1pdGVtczogY2VudGVyO1xyXG4gIHotaW5kZXg6IDEwMDA7XHJcbmA7XHJcblxyXG5jb25zdCBNb2RhbENvbnRlbnQgPSBzdHlsZWQuZGl2YFxyXG4gIGJhY2tncm91bmQ6IHdoaXRlO1xyXG4gIHBhZGRpbmc6IDI0cHg7XHJcbiAgYm9yZGVyLXJhZGl1czogMTJweDtcclxuICB3aWR0aDogNDAwcHg7XHJcbmA7XHJcblxyXG5jb25zdCBNb2RhbFRpdGxlID0gc3R5bGVkLmgzYFxyXG4gIG1hcmdpbi1ib3R0b206IDE2cHg7XHJcbiAgZm9udC1zaXplOiAxLjRyZW07XHJcbmA7XHJcblxyXG5jb25zdCBJbnB1dCA9IHN0eWxlZC5pbnB1dGBcclxuICB3aWR0aDogMTAwJTtcclxuICBwYWRkaW5nOiA4cHg7XHJcbiAgbWFyZ2luLWJvdHRvbTogMTJweDtcclxuICBib3JkZXItcmFkaXVzOiA2cHg7XHJcbiAgYm9yZGVyOiAxcHggc29saWQgI2QxZDVkYjtcclxuYDtcclxuXHJcbmNvbnN0IE1vZGFsQnV0dG9ucyA9IHN0eWxlZC5kaXZgXHJcbiAgZGlzcGxheTogZmxleDtcclxuICBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtZW5kO1xyXG4gIGdhcDogMTJweDtcclxuYDtcclxuXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIFZlaGljdWxvcygpIHtcclxuICBjb25zdCBbdmVoaWN1bG9JbmZvLCBzZXRWZWhpY3Vsb0luZm9dID0gdXNlU3RhdGUobnVsbCk7XHJcbiAgY29uc3QgW2RlcGFydGFtZW50b3MsIHNldERlcGFydGFtZW50b3NdID0gdXNlU3RhdGUoW10pO1xyXG4gIGNvbnN0IFtlcnJvciwgc2V0RXJyb3JdID0gdXNlU3RhdGUoXCJcIik7XHJcbiAgY29uc3QgW3Nob3dNb2RhbCwgc2V0U2hvd01vZGFsXSA9IHVzZVN0YXRlKGZhbHNlKTtcclxuICBjb25zdCBbZm9ybURhdGEsIHNldEZvcm1EYXRhXSA9IHVzZVN0YXRlKHtcclxuICAgIG51bWVybzogXCJcIiwgICAgICAgICAgICAgXHJcbiAgICBwaXNvOiBcIlwiLCAgICAgICAgICAgICAgIFxyXG4gICAgdGVsZWZvbm86IFwiXCIsXHJcbiAgICBub21icmVfaW5xdWlsaW5vOiBcIlwiLFxyXG4gICAgYXBlbGxpZG9faW5xdWlsaW5vOiBcIlwiLFxyXG4gICAgamVyYXJxdWlhOiBcIlwiXHJcbiAgfSk7XHJcblxyXG4gIHVzZUVmZmVjdCgoKSA9PiB7XHJcbiAgICBhc3luYyBmdW5jdGlvbiBmZXRjaERlcGFydGFtZW50b3MoKSB7XHJcbiAgICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCB3aW5kb3cuYXBpLmdldCgnL2FwaS9lZGlmaWNpb3MvdmVoaWN1bG9zJyk7XHJcbiAgICAgICAgaWYgKHJlc3BvbnNlLmVycm9yKSB0aHJvdyBuZXcgRXJyb3IocmVzcG9uc2UuZXJyb3IpO1xyXG5cclxuICAgICAgICBjb25zdCB2ZWhpY3VsbyA9IHJlc3BvbnNlLlZFSElDVUxPO1xyXG4gICAgICAgIGlmICghdmVoaWN1bG8gfHwgIXZlaGljdWxvLnBpc29zKSB7XHJcbiAgICAgICAgICBzZXRWZWhpY3Vsb0luZm8odmVoaWN1bG8pO1xyXG4gICAgICAgICAgc2V0RGVwYXJ0YW1lbnRvcyhbXSk7XHJcbiAgICAgICAgICByZXR1cm47XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICBjb25zdCBkZXBhcnRhbWVudG9zQXJyYXkgPSBPYmplY3QudmFsdWVzKHZlaGljdWxvLnBpc29zKS5mbGF0KCk7XHJcbiAgICAgICAgc2V0VmVoaWN1bG9JbmZvKHZlaGljdWxvKTtcclxuICAgICAgICBzZXREZXBhcnRhbWVudG9zKGRlcGFydGFtZW50b3NBcnJheSk7XHJcbiAgICAgIH0gY2F0Y2ggKGVycikge1xyXG4gICAgICAgIHNldEVycm9yKGVyci5tZXNzYWdlIHx8IFwiRXJyb3IgYWwgb2J0ZW5lciBsb3MgdmVow61jdWxvc1wiKTtcclxuICAgICAgfVxyXG4gICAgfVxyXG4gICAgZmV0Y2hEZXBhcnRhbWVudG9zKCk7XHJcbiAgfSwgW10pO1xyXG5cclxuICBjb25zdCBoYW5kbGVDaGFuZ2UgPSAoZSkgPT4ge1xyXG4gICAgc2V0Rm9ybURhdGEoeyAuLi5mb3JtRGF0YSwgW2UudGFyZ2V0Lm5hbWVdOiBlLnRhcmdldC52YWx1ZSB9KTtcclxuICB9O1xyXG5cclxuICBjb25zdCBoYW5kbGVDcmVhdGVWZWhpY3VsbyA9IGFzeW5jICgpID0+IHtcclxuICAgIHRyeSB7XHJcbiAgICAgIGNvbnN0IHJlc3VsdCA9IGF3YWl0IHdpbmRvdy5hcGkucG9zdCgnL2FwaS9lZGlmaWNpb3MvbmV3X3ZlaGljdWxvLycsIGZvcm1EYXRhKTtcclxuICAgICAgaWYgKHJlc3VsdC5lcnJvcikgdGhyb3cgbmV3IEVycm9yKHJlc3VsdC5lcnJvcik7XHJcblxyXG4gICAgICBzZXREZXBhcnRhbWVudG9zKFsuLi5kZXBhcnRhbWVudG9zLCByZXN1bHRdKTtcclxuICAgICAgc2V0U2hvd01vZGFsKGZhbHNlKTtcclxuICAgICAgc2V0Rm9ybURhdGEoe1xyXG4gICAgICAgIG51bWVybzogXCJcIixcclxuICAgICAgICBwaXNvOiBcIlwiLFxyXG4gICAgICAgIHRlbGVmb25vOiBcIlwiLFxyXG4gICAgICAgIG5vbWJyZV9pbnF1aWxpbm86IFwiXCIsXHJcbiAgICAgICAgYXBlbGxpZG9faW5xdWlsaW5vOiBcIlwiLFxyXG4gICAgICAgIGplcmFycXVpYTogXCJcIlxyXG4gICAgICB9KTtcclxuICAgIH0gY2F0Y2ggKGVycikge1xyXG4gICAgICBhbGVydChlcnIubWVzc2FnZSB8fCBcIkVycm9yIGFsIGNyZWFyIHZlaMOtY3Vsb1wiKTtcclxuICAgIH1cclxuICB9O1xyXG5cclxuICByZXR1cm4gKFxyXG4gICAgPENvbnRhaW5lcj5cclxuICAgICAgPFRpdGxlPlZlaMOtY3Vsb3M8L1RpdGxlPlxyXG4gICAgICA8QnV0dG9uIG9uQ2xpY2s9eygpID0+IHNldFNob3dNb2RhbCh0cnVlKX0+Q3JlYXIgVmVow61jdWxvPC9CdXR0b24+XHJcblxyXG4gICAgICB7ZXJyb3IgJiYgPEVycm9yTWVzc2FnZT57ZXJyb3J9PC9FcnJvck1lc3NhZ2U+fVxyXG5cclxuICAgICAge0FycmF5LmlzQXJyYXkoZGVwYXJ0YW1lbnRvcykgJiYgZGVwYXJ0YW1lbnRvcy5sZW5ndGggPiAwID8gKFxyXG4gICAgICAgIDxWZWhpY2xlTGlzdD5cclxuICAgICAgICAgIHtkZXBhcnRhbWVudG9zLm1hcCgoZHB0bykgPT4gKFxyXG4gICAgICAgICAgICA8VmVoaWNsZUNhcmQga2V5PXtkcHRvLmlkfT5cclxuICAgICAgICAgICAgICA8VmVoaWNsZUluZm8+XHJcbiAgICAgICAgICAgICAgICA8TGFiZWw+UGF0ZW50ZTo8L0xhYmVsPiA8VmFsdWU+e2RwdG8ubnVtZXJvfTwvVmFsdWU+XHJcbiAgICAgICAgICAgICAgICA8TGFiZWw+TWFyY2E6PC9MYWJlbD4gPFZhbHVlPntkcHRvLnBpc299PC9WYWx1ZT5cclxuICAgICAgICAgICAgICA8L1ZlaGljbGVJbmZvPlxyXG4gICAgICAgICAgICAgIDxTdHlsZWRMaW5rIHRvPXtgL2RlcGFydGFtZW50by8ke2RwdG8uaWR9YH0+XHJcbiAgICAgICAgICAgICAgICBWZXIgZGV0YWxsZXNcclxuICAgICAgICAgICAgICA8L1N0eWxlZExpbms+XHJcbiAgICAgICAgICAgIDwvVmVoaWNsZUNhcmQ+XHJcbiAgICAgICAgICApKX1cclxuICAgICAgICA8L1ZlaGljbGVMaXN0PlxyXG4gICAgICApIDogKFxyXG4gICAgICAgIDxFbXB0eU1lc3NhZ2U+Tm8gaGF5IHZlaMOtY3Vsb3MgY2FyZ2Fkb3MuPC9FbXB0eU1lc3NhZ2U+XHJcbiAgICAgICl9XHJcblxyXG4gICAgICB7LyogTW9kYWwgKi99XHJcbiAgICAgIDxNb2RhbE92ZXJsYXkgc2hvdz17c2hvd01vZGFsfT5cclxuICAgICAgICA8TW9kYWxDb250ZW50PlxyXG4gICAgICAgICAgPE1vZGFsVGl0bGU+Q3JlYXIgVmVow61jdWxvPC9Nb2RhbFRpdGxlPlxyXG4gICAgICAgICAgPElucHV0IG5hbWU9XCJudW1lcm9cIiBwbGFjZWhvbGRlcj1cIlBhdGVudGVcIiB2YWx1ZT17Zm9ybURhdGEubnVtZXJvfSBvbkNoYW5nZT17aGFuZGxlQ2hhbmdlfSAvPlxyXG4gICAgICAgICAgPElucHV0IG5hbWU9XCJwaXNvXCIgcGxhY2Vob2xkZXI9XCJNYXJjYVwiIHZhbHVlPXtmb3JtRGF0YS5waXNvfSBvbkNoYW5nZT17aGFuZGxlQ2hhbmdlfSAvPlxyXG4gICAgICAgICAgPElucHV0IG5hbWU9XCJ0ZWxlZm9ub1wiIHBsYWNlaG9sZGVyPVwiVGVsw6lmb25vXCIgdmFsdWU9e2Zvcm1EYXRhLnRlbGVmb25vfSBvbkNoYW5nZT17aGFuZGxlQ2hhbmdlfSAvPlxyXG4gICAgICAgICAgPElucHV0IG5hbWU9XCJub21icmVfaW5xdWlsaW5vXCIgcGxhY2Vob2xkZXI9XCJOb21icmVcIiB2YWx1ZT17Zm9ybURhdGEubm9tYnJlX2lucXVpbGlub30gb25DaGFuZ2U9e2hhbmRsZUNoYW5nZX0gLz5cclxuICAgICAgICAgIDxJbnB1dCBuYW1lPVwiYXBlbGxpZG9faW5xdWlsaW5vXCIgcGxhY2Vob2xkZXI9XCJBcGVsbGlkb1wiIHZhbHVlPXtmb3JtRGF0YS5hcGVsbGlkb19pbnF1aWxpbm99IG9uQ2hhbmdlPXtoYW5kbGVDaGFuZ2V9IC8+XHJcbiAgICAgICAgICA8SW5wdXQgbmFtZT1cImplcmFycXVpYVwiIHBsYWNlaG9sZGVyPVwiSmVyYXJxdcOtYVwiIHZhbHVlPXtmb3JtRGF0YS5qZXJhcnF1aWF9IG9uQ2hhbmdlPXtoYW5kbGVDaGFuZ2V9IC8+XHJcblxyXG4gICAgICAgICAgPE1vZGFsQnV0dG9ucz5cclxuICAgICAgICAgICAgPEJ1dHRvbiBvbkNsaWNrPXsoKSA9PiBzZXRTaG93TW9kYWwoZmFsc2UpfT5DYW5jZWxhcjwvQnV0dG9uPlxyXG4gICAgICAgICAgICA8QnV0dG9uIG9uQ2xpY2s9e2hhbmRsZUNyZWF0ZVZlaGljdWxvfT5HdWFyZGFyPC9CdXR0b24+XHJcbiAgICAgICAgICA8L01vZGFsQnV0dG9ucz5cclxuICAgICAgICA8L01vZGFsQ29udGVudD5cclxuICAgICAgPC9Nb2RhbE92ZXJsYXk+XHJcbiAgICA8L0NvbnRhaW5lcj5cclxuICApO1xyXG59XHJcbiJdLCJmaWxlIjoiQzovVXNlcnMvR2VybWEvT25lRHJpdmUvRXNjcml0b3Jpby9TaXN0ZW1hIGRlIEdlc3Rpb24gcG9ydGFibGUvZ2VzdGlvbi1hcHAtZWxlY3Ryb24vcmVuZGVyZXIvc3JjL3BhZ2VzL1ZlaGljdWxvcy5qc3gifQ==

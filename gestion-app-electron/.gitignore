@@ -1,1 +1,15 @@
+
+# Electron / builds
+gestion-app-electron/dist/
+electron-builds/
+*.exe
+*.asar
+*.zip
+
+# Bases de datos y cachés
+*.db
+*.db-shm
+*.db-wal
+
+# Node
 node_modules/

@@ -171,11 +171,10 @@ const Container = styled.div`
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
-const Title = styled.h1`
-  font-size: 22px;
+const Title = styled.p`
+  font-size: 1.5rem;
   text-align: center;
   margin-bottom: 20px;
-  font-weight: 700;
 `;
 
 const MensajeExito = styled.p`
